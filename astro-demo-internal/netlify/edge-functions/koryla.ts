@@ -1,12 +1,11 @@
 /**
- * Splitr A/B testing — Netlify Edge Function (self-contained)
+ * Koryla A/B testing — Netlify Edge Function (self-contained)
  *
- * This file bundles the @splitr/core logic inline so Netlify CLI's esbuild
- * can bundle it without needing workspace package resolution.
- * In production you'd publish @splitr/core to npm and import it normally.
+ * Core split engine inlined — no external dependencies needed.
+ * Set KORYLA_API_KEY and KORYLA_API_URL in Netlify environment variables.
  */
 
-// ── Core engine (inlined from @splitr/core) ───────────────────────────────
+// ── Core engine (inlined) ─────────────────────────────────────────────────
 
 interface Variant {
   id: string; name: string; traffic_weight: number
@@ -23,7 +22,7 @@ interface SplitResult {
   targetUrl: string; cookieName: string; isNewAssignment: boolean
 }
 
-const COOKIE_PREFIX = 'sp_'
+const COOKIE_PREFIX = 'ky_'
 const CACHE_TTL = 60_000
 
 function createSplitEngine(options: { apiKey: string; apiUrl: string }) {
@@ -99,8 +98,8 @@ function createSplitEngine(options: { apiKey: string; apiUrl: string }) {
 // ── Netlify adapter ───────────────────────────────────────────────────────
 
 const engine = createSplitEngine({
-  apiKey: Deno.env.get('SPLITR_API_KEY') ?? '',
-  apiUrl: Deno.env.get('SPLITR_API_URL') ?? 'http://localhost:3001',
+  apiKey: Deno.env.get('KORYLA_API_KEY') ?? '',
+  apiUrl: Deno.env.get('KORYLA_API_URL') ?? 'https://app.koryla.com',
 })
 
 interface NetlifyContext {

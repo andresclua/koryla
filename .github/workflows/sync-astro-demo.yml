@@ -1,0 +1,26 @@
+name: Sync astro-demo-internal → astro-demo-example
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'astro-demo-internal/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push subtree to astro-demo-example
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add astro-demo https://x-access-token:${GH_PAT}@github.com/andresclua/koryla-astro-demo-example.git
+          git subtree push --prefix=astro-demo-internal astro-demo main
