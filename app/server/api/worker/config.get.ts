@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
   // Fetch active experiments with variants
   const { data: experiments, error: expError } = await supabase
     .from('experiments')
-    .select('id, name, base_url, variants(id, name, traffic_weight, target_url, is_control)')
+    .select('id, name, base_url, conversion_url, variants(id, name, traffic_weight, target_url, is_control)')
     .eq('workspace_id', apiKey.workspace_id)
     .eq('status', 'active')
 
@@ -52,6 +52,7 @@ export default defineEventHandler(async (event) => {
     id: exp.id,
     name: exp.name,
     base_url: exp.base_url,
+    conversion_url: exp.conversion_url ?? null,
     variants: exp.variants ?? [],
     destinations: destinations ?? [],
   }))
