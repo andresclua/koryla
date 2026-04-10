@@ -69,6 +69,17 @@ const switchWorkspace = (e: Event) => {
         </NuxtLink>
 
         <NuxtLink
+          :to="`/dashboard/${currentWorkspace?.slug}/billing`"
+          class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          active-class="bg-blue-50 text-blue-700 font-medium hover:bg-blue-50 hover:text-blue-700"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+          Billing
+        </NuxtLink>
+
+        <NuxtLink
           :to="`/dashboard/${currentWorkspace?.slug}/settings`"
           class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
           active-class="bg-blue-50 text-blue-700 font-medium hover:bg-blue-50 hover:text-blue-700"

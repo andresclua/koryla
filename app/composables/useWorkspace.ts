@@ -6,6 +6,9 @@ export interface Workspace {
   domain: string | null
   auto_join_domain: boolean
   role: string
+  billing_period: 'monthly' | 'yearly' | null
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
 }
 
 export const useWorkspace = () => {
