@@ -158,10 +158,10 @@ const steps: Record<string, { title: string; key: string }[]> = {
         { n: '2', title: 'Install the adapter', desc: 'Pick your platform below and follow the steps' },
         { n: '3', title: 'Create an experiment', desc: 'Dashboard → New experiment → set Active', href: `/dashboard/${slug}` },
       ]" :key="i" class="bg-white border border-gray-200 rounded-2xl p-4">
-        <div class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center mb-3">{{ item.n }}</div>
+        <div class="w-6 h-6 rounded-full bg-[#C96A3F] text-white text-xs font-bold flex items-center justify-center mb-3">{{ item.n }}</div>
         <p class="text-sm font-semibold text-gray-800">{{ item.title }}</p>
         <p class="text-xs text-gray-400 mt-0.5 leading-relaxed">{{ item.desc }}</p>
-        <NuxtLink v-if="item.href" :to="item.href" class="text-xs text-blue-600 hover:underline mt-1.5 inline-block">Go →</NuxtLink>
+        <NuxtLink v-if="item.href" :to="item.href" class="text-xs text-[#C96A3F] hover:underline mt-1.5 inline-block">Go →</NuxtLink>
       </div>
     </div>
 
@@ -217,9 +217,9 @@ const steps: Record<string, { title: string; key: string }[]> = {
     </div>
 
     <!-- No flicker callout -->
-    <div class="bg-blue-50 border border-blue-100 rounded-2xl px-6 py-5">
-      <p class="text-sm font-semibold text-blue-900 mb-2">Why no flicker?</p>
-      <p class="text-sm text-blue-700 leading-relaxed">
+    <div class="bg-[#FEF0E8] border border-[#F0C9B0] rounded-2xl px-6 py-5">
+      <p class="text-sm font-semibold text-[#0F2235] mb-2">Why no flicker?</p>
+      <p class="text-sm text-[#5a3020] leading-relaxed">
         Tools like VWO and Optimizely run in the browser — they hide the page, swap content, then reveal it.
         Koryla decides the variant <strong>before any HTML leaves the server</strong>.
         The browser only ever receives the assigned variant. Nothing to flash.
@@ -227,11 +227,11 @@ const steps: Record<string, { title: string; key: string }[]> = {
       <div class="grid grid-cols-2 gap-3 mt-4 text-xs">
         <div class="bg-white/60 rounded-xl p-3">
           <p class="font-semibold text-red-600 mb-1">VWO / Optimizely</p>
-          <p class="text-blue-700">JS loads → page hides → content swaps → page shows<br/>~80–150KB extra JS · blockable</p>
+          <p class="text-[#7a4030]">JS loads → page hides → content swaps → page shows<br/>~80–150KB extra JS · blockable</p>
         </div>
         <div class="bg-white/60 rounded-xl p-3">
           <p class="font-semibold text-green-600 mb-1">Koryla</p>
-          <p class="text-blue-700">Server picks variant → sends correct HTML<br/>0KB extra JS · not blockable</p>
+          <p class="text-[#7a4030]">Server picks variant → sends correct HTML<br/>0KB extra JS · not blockable</p>
         </div>
       </div>
     </div>

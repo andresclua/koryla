@@ -87,7 +87,7 @@ const signup = async () => {
             type="email"
             required
             autocomplete="email"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F]"
             @blur="checkDomain"
             @input="resetDomainCheck"
           />
@@ -101,7 +101,7 @@ const signup = async () => {
             required
             autocomplete="new-password"
             minlength="8"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F]"
           />
         </div>
 
@@ -111,7 +111,7 @@ const signup = async () => {
           </label>
 
           <div v-if="joinExisting" class="flex items-center gap-2">
-            <div class="flex-1 border border-blue-200 bg-blue-50 rounded-lg px-3 py-2 text-sm text-blue-700 font-medium">
+            <div class="flex-1 border border-[#F0C9B0] bg-[#FEF0E8] rounded-lg px-3 py-2 text-sm text-[#C96A3F] font-medium">
               {{ workspaceName }}
             </div>
             <button
@@ -129,10 +129,10 @@ const signup = async () => {
             type="text"
             required
             placeholder="Acme Inc"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F]"
           />
 
-          <p v-if="joinExisting" class="text-xs text-blue-600 mt-1">
+          <p v-if="joinExisting" class="text-xs text-[#C96A3F] mt-1">
             Your email domain matches this workspace — you'll join as a member.
           </p>
         </div>
@@ -142,7 +142,7 @@ const signup = async () => {
         <button
           type="submit"
           :disabled="loading"
-          class="w-full bg-blue-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+          class="w-full bg-[#C96A3F] text-white rounded-lg py-2 text-sm font-medium hover:bg-[#A8522D] disabled:opacity-50"
         >
           {{ loading ? 'Creating account…' : 'Create account' }}
         </button>
@@ -150,7 +150,7 @@ const signup = async () => {
 
       <p class="text-center text-sm text-gray-500 mt-4">
         Already have an account?
-        <NuxtLink to="/login" class="text-blue-600 hover:underline">Sign in</NuxtLink>
+        <NuxtLink to="/login" class="text-[#C96A3F] hover:underline">Sign in</NuxtLink>
       </p>
     </div>
   </div>

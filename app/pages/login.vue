@@ -13,12 +13,12 @@ const loginWithGoogle = () => {
   <div class="w-full max-w-sm">
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
       <div class="text-center mb-8">
-        <h1 class="text-2xl font-semibold text-gray-900">Welcome back</h1>
+        <h1 class="text-2xl font-semibold" style="color: #0F2235;">Welcome back</h1>
         <p class="text-sm text-gray-500 mt-1">Sign in to your Koryla workspace</p>
       </div>
 
       <button
-        class="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-xl py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+        class="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
         @click="loginWithGoogle"
       >
         <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
@@ -32,8 +32,8 @@ const loginWithGoogle = () => {
 
       <p class="text-center text-xs text-gray-400 mt-6">
         By signing in you agree to our
-        <a href="#" class="underline hover:text-gray-600">Terms</a> and
-        <a href="#" class="underline hover:text-gray-600">Privacy Policy</a>.
+        <NuxtLink to="/terms" class="underline hover:text-gray-600">Terms</NuxtLink> and
+        <NuxtLink to="/privacy" class="underline hover:text-gray-600">Privacy Policy</NuxtLink>.
       </p>
     </div>
   </div>

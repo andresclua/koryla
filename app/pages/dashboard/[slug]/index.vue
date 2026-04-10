@@ -115,7 +115,7 @@ const statusConfig: Record<string, { label: string; class: string }> = {
   draft:     { label: 'Draft',     class: 'bg-gray-100 text-gray-600' },
   active:    { label: 'Active',    class: 'bg-green-100 text-green-700' },
   paused:    { label: 'Paused',    class: 'bg-amber-100 text-amber-700' },
-  completed: { label: 'Completed', class: 'bg-blue-100 text-blue-700' },
+  completed: { label: 'Completed', class: 'bg-[#FEF0E8] text-[#C96A3F]' },
 }
 
 const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -135,7 +135,7 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
         </p>
       </div>
       <button
-        class="inline-flex items-center gap-2 bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        class="inline-flex items-center gap-2 bg-[#C96A3F] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#A8522D] transition-colors"
         @click="openPanel"
       >
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -154,7 +154,7 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
       </div>
       <h3 class="text-sm font-semibold text-gray-900 mb-1">No experiments yet</h3>
       <p class="text-sm text-gray-500 max-w-xs mx-auto mb-4">Create your first experiment to start splitting traffic between variants.</p>
-      <button class="text-sm font-medium text-blue-600 hover:text-blue-700" @click="openPanel">Create experiment →</button>
+      <button class="text-sm font-medium text-[#C96A3F] hover:text-[#A8522D]" @click="openPanel">Create experiment →</button>
     </div>
 
     <!-- Experiment list -->
@@ -167,7 +167,7 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
         <div class="px-6 py-4 flex items-start gap-4">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2.5 flex-wrap">
-              <NuxtLink :to="`/dashboard/${slug}/experiments/${exp.id}`" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors">
+              <NuxtLink :to="`/dashboard/${slug}/experiments/${exp.id}`" class="text-sm font-semibold text-gray-900 hover:text-[#C96A3F] transition-colors">
                 {{ exp.name }}
               </NuxtLink>
               <span :class="['text-xs font-medium px-2 py-0.5 rounded-full', statusConfig[exp.status]?.class]">
@@ -210,7 +210,7 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
             <button
               v-if="exp.status === 'active' || exp.status === 'paused'"
               :disabled="updatingId === exp.id"
-              class="text-xs font-medium text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors disabled:opacity-40"
+              class="text-xs font-medium text-[#0F2235] hover:text-[#C96A3F] px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-[#FEF0E8] transition-colors disabled:opacity-40"
               @click="setStatus(exp, 'completed')"
             >Complete</button>
             <button
@@ -226,12 +226,12 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
             <div
               v-for="v in exp.variants" :key="v.id"
               :style="{ width: v.traffic_weight + '%' }"
-              :class="v.is_control ? 'bg-gray-400' : 'bg-blue-500'"
+              :class="v.is_control ? 'bg-gray-400' : 'bg-[#C96A3F]'"
             />
           </div>
           <div class="flex items-center gap-4 mt-2 flex-wrap">
             <div v-for="v in exp.variants" :key="v.id" class="flex items-center gap-1.5">
-              <div :class="['w-2 h-2 rounded-full shrink-0', v.is_control ? 'bg-gray-400' : 'bg-blue-500']" />
+              <div :class="['w-2 h-2 rounded-full shrink-0', v.is_control ? 'bg-gray-400' : 'bg-[#C96A3F]']" />
               <span class="text-xs text-gray-600">{{ v.name }}</span>
               <span class="text-xs text-gray-400">{{ v.traffic_weight }}%</span>
               <span v-if="exp.total_impressions" class="text-xs text-gray-400">· {{ v.impressions.toLocaleString() }} imp</span>
@@ -241,7 +241,7 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
 
         <div class="px-6 py-2.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
           <p class="text-xs text-gray-400">Created {{ formatDate(exp.created_at) }}</p>
-          <NuxtLink :to="`/dashboard/${slug}/experiments/${exp.id}`" class="text-xs text-blue-600 hover:text-blue-700 font-medium">
+          <NuxtLink :to="`/dashboard/${slug}/experiments/${exp.id}`" class="text-xs text-[#C96A3F] hover:text-[#A8522D] font-medium">
             View details →
           </NuxtLink>
         </div>
@@ -277,7 +277,7 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1.5">Experiment name</label>
                   <input v-model="form.name" type="text" placeholder="Homepage hero test"
-                    class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F]" />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1.5">
@@ -285,7 +285,7 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
                     <span class="text-gray-400 font-normal ml-1">— URL to intercept</span>
                   </label>
                   <input v-model="form.base_url" type="url" placeholder="https://acme.com/pricing"
-                    class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F]" />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1.5">
@@ -293,7 +293,7 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
                     <span class="text-gray-400 font-normal ml-1">(optional)</span>
                   </label>
                   <input v-model="form.conversion_url" type="url" placeholder="https://acme.com/thank-you"
-                    class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F]" />
                 </div>
               </div>
 
@@ -311,7 +311,7 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
                     class="border border-gray-200 rounded-xl p-4 space-y-3">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2">
-                        <div :class="['w-2 h-2 rounded-full', v.is_control ? 'bg-gray-400' : 'bg-blue-500']" />
+                        <div :class="['w-2 h-2 rounded-full', v.is_control ? 'bg-gray-400' : 'bg-[#C96A3F]']" />
                         <input v-model="v.name" type="text" class="text-sm font-medium text-gray-800 bg-transparent focus:outline-none focus:underline w-32" />
                       </div>
                       <button v-if="!v.is_control && form.variants.length > 2"
@@ -321,18 +321,18 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
                     <div class="grid grid-cols-3 gap-2">
                       <div class="col-span-2">
                         <input v-model="v.target_url" type="url" placeholder="https://acme.com/pricing-b"
-                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#C96A3F]" />
                       </div>
                       <div class="flex items-center gap-1.5">
                         <input v-model.number="v.traffic_weight" type="number" min="1" max="99"
-                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-center focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-center focus:outline-none focus:ring-2 focus:ring-[#C96A3F]" />
                         <span class="text-xs text-gray-400 shrink-0">%</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <button class="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium" @click="addVariant">
+                <button class="mt-3 text-sm text-[#C96A3F] hover:text-[#A8522D] font-medium" @click="addVariant">
                   + Add variant
                 </button>
               </div>
@@ -342,7 +342,7 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
             <div class="px-6 py-4 border-t border-gray-100 flex items-center gap-3 shrink-0">
               <button
                 :disabled="saving || !form.name || !form.base_url || totalWeight !== 100"
-                class="flex-1 bg-blue-600 text-white text-sm font-medium py-2.5 rounded-xl hover:bg-blue-700 disabled:opacity-40 transition-colors"
+                class="flex-1 bg-[#C96A3F] text-white text-sm font-medium py-2.5 rounded-xl hover:bg-[#A8522D] disabled:opacity-40 transition-colors"
                 @click="createExperiment"
               >
                 {{ saving ? 'Creating…' : 'Create experiment' }}
