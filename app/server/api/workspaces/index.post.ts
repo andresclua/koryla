@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { extractDomain, isPublicDomain } from '~/lib/publicDomains'
+import { sendWelcomeEmail } from '~/server/utils/resend'
 
 interface Body {
   userId: string
@@ -71,6 +72,11 @@ export default defineEventHandler(async (event) => {
     .insert({ workspace_id: ws.id, user_id: userId, role: 'owner' })
 
   if (memberErr) throw createError({ statusCode: 500, message: memberErr.message })
+
+  // Send welcome email (fire-and-forget)
+  const config = useRuntimeConfig()
+  const appUrl = config.public.appUrl || 'http://localhost:3000'
+  sendWelcomeEmail(email, workspaceName, appUrl).catch(console.error)
 
   return { slug: ws.slug }
 })

@@ -24,7 +24,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      exclude: ['/signup', '/login', '/verify-email'],
+      exclude: ['/signup', '/login', '/verify-email', '/blog', '/blog/**', '/docs', '/docs/**'],
     },
     clientOptions: {
       auth: {
@@ -46,7 +46,8 @@ export default defineNuxtConfig({
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     resendApiKey: process.env.RESEND_API_KEY,
     resendFromEmail: process.env.RESEND_FROM_EMAIL || 'hello@splitr.io',
-    workerSecret: process.env.WORKER_SECRET,
+    githubToken: process.env.GITHUB_TOKEN,
+    githubRepo: process.env.GITHUB_REPO || 'andresclua/splitr',
     public: {
       appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000',
     },

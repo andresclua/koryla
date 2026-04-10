@@ -1,6 +1,7 @@
 import { serverSupabaseUser } from '#supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { randomBytes } from 'crypto'
+import { sendInviteEmail } from '~/server/utils/resend'
 
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
@@ -44,9 +45,14 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig()
   const appUrl = config.public.appUrl || 'http://localhost:3000'
+  const inviteUrl = `${appUrl}/invite/${token}`
+
+  // Send invite email (fire-and-forget)
+  const inviterName = user.user_metadata?.full_name || user.email || 'Someone'
+  sendInviteEmail(email, inviterName, ws.name, inviteUrl).catch(console.error)
 
   return {
     ...data,
-    invite_url: `${appUrl}/invite/${token}`,
+    invite_url: inviteUrl,
   }
 })

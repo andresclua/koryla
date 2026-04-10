@@ -1,11 +1,11 @@
 export const STRIPE_PRICES = {
   starter: {
-    monthly: 'price_1TKianIjaYaM2IiLFoVmyl68',
-    yearly:  'price_1TKicKIjaYaM2IiL2NO7mW4B',
+    monthly: 'price_1TKlhIIjaYaM2IiLfPfayAFs',
+    yearly:  'price_1TKlhIIjaYaM2IiLfPfayAFs',
   },
   growth: {
-    monthly: 'price_1TKibsIjaYaM2IiLPu9Vj0zH',
-    yearly:  'price_1TKicqIjaYaM2IiLoNSjxL33',
+    monthly: 'price_1TKlhIIjaYaM2IiLfPfayAFs',
+    yearly:  'price_1TKlhIIjaYaM2IiLfPfayAFs',
   },
 } as const
 

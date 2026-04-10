@@ -37,9 +37,7 @@ const planDetails = computed(() => PLANS[currentPlan.value])
 
 const isPaid = computed(() => currentPlan.value !== 'free')
 
-const upgradeablePlans = computed(() =>
-  (['starter', 'growth'] as PlanKey[]).filter(p => p !== currentPlan.value),
-)
+const upgradeablePlans = computed((): PlanKey[] => ['free', 'starter', 'growth'])
 
 const priceFor = (planKey: PlanKey, period: 'monthly' | 'yearly') => {
   return PLANS[planKey].price[period]
@@ -92,7 +90,7 @@ const openPortal = async () => {
 </script>
 
 <template>
-  <div class="p-8 max-w-3xl">
+  <div class="p-8 max-w-5xl">
 
     <!-- Header -->
     <div class="mb-8">
@@ -155,8 +153,8 @@ const openPortal = async () => {
       </div>
     </div>
 
-    <!-- Upgrade section (free plan only) -->
-    <template v-if="!isPaid">
+    <!-- Plan options -->
+    <template v-if="upgradeablePlans.length > 0">
       <!-- Period toggle -->
       <div class="flex items-center gap-3 mb-6">
         <span class="text-sm text-gray-700 font-medium">Billing period</span>
@@ -182,24 +180,32 @@ const openPortal = async () => {
       </div>
 
       <!-- Upgrade cards -->
-      <div class="grid sm:grid-cols-2 gap-4">
+      <div class="grid sm:grid-cols-3 gap-4">
         <div
           v-for="planKey in upgradeablePlans"
           :key="planKey"
-          class="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col"
-          :class="{ 'border-blue-400 ring-1 ring-blue-400': planKey === 'growth' }"
+          class="bg-white border rounded-2xl p-6 flex flex-col"
+          :class="planKey === currentPlan ? 'border-green-400 ring-1 ring-green-400' : planKey === 'growth' ? 'border-blue-400 ring-1 ring-blue-400' : 'border-gray-200'"
         >
           <div class="flex items-center justify-between mb-1">
             <h3 class="text-base font-semibold text-gray-900">{{ PLANS[planKey].name }}</h3>
-            <span v-if="planKey === 'growth'" class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Popular</span>
+            <span v-if="planKey === currentPlan" class="text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">Current plan</span>
+            <span v-else-if="planKey === 'growth'" class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Popular</span>
           </div>
 
           <div class="mb-4">
-            <span class="text-3xl font-bold text-gray-900">${{ priceFor(planKey, billingPeriod) }}</span>
-            <span class="text-sm text-gray-400 ml-1">/ {{ billingPeriod === 'yearly' ? 'year' : 'month' }}</span>
-            <p v-if="billingPeriod === 'yearly'" class="text-xs text-green-600 mt-0.5 font-medium">
-              Save ${{ PLANS[planKey as 'starter' | 'growth'].price.monthly * 12 - PLANS[planKey as 'starter' | 'growth'].price.yearly }} vs monthly
-            </p>
+            <template v-if="planKey === 'free'">
+              <span class="text-3xl font-bold text-gray-900">$0</span>
+              <span class="text-sm text-gray-400 ml-1">/ month</span>
+              <p class="text-xs text-gray-400 mt-0.5">Cancel anytime, effective at period end</p>
+            </template>
+            <template v-else>
+              <span class="text-3xl font-bold text-gray-900">${{ priceFor(planKey, billingPeriod) }}</span>
+              <span class="text-sm text-gray-400 ml-1">/ {{ billingPeriod === 'yearly' ? 'year' : 'month' }}</span>
+              <p v-if="billingPeriod === 'yearly'" class="text-xs text-green-600 mt-0.5 font-medium">
+                Save ${{ PLANS[planKey as 'starter' | 'growth'].price.monthly * 12 - PLANS[planKey as 'starter' | 'growth'].price.yearly }} vs monthly
+              </p>
+            </template>
           </div>
 
           <ul class="space-y-2 mb-6 flex-1">
@@ -242,13 +248,14 @@ const openPortal = async () => {
           </ul>
 
           <button
-            :disabled="loadingPriceId === stripePriceId(planKey, billingPeriod)"
+            v-if="planKey !== currentPlan"
+            :disabled="planKey === 'free' ? loadingPortal : loadingPriceId === stripePriceId(planKey, billingPeriod)"
             class="w-full py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            :class="planKey === 'growth' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-900 text-white hover:bg-gray-800'"
-            @click="startCheckout(planKey)"
+            :class="planKey === 'growth' ? 'bg-blue-600 text-white hover:bg-blue-700' : planKey === 'free' ? 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50' : 'bg-gray-900 text-white hover:bg-gray-800'"
+            @click="planKey === 'free' ? openPortal() : startCheckout(planKey)"
           >
             <svg
-              v-if="loadingPriceId === stripePriceId(planKey, billingPeriod)"
+              v-if="planKey === 'free' ? loadingPortal : loadingPriceId === stripePriceId(planKey, billingPeriod)"
               class="w-4 h-4 animate-spin"
               fill="none"
               viewBox="0 0 24 24"
@@ -256,8 +263,14 @@ const openPortal = async () => {
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Upgrade to {{ PLANS[planKey].name }}
+            {{ planKey === 'free' ? 'Downgrade to Free' : (currentPlan === 'free' || planKey === 'growth' ? 'Upgrade' : 'Downgrade') + ' to ' + PLANS[planKey].name }}
           </button>
+          <div
+            v-else
+            class="w-full py-2.5 rounded-xl text-sm font-medium text-center text-gray-400 bg-gray-50 border border-gray-100"
+          >
+            Your current plan
+          </div>
         </div>
       </div>
     </template>
