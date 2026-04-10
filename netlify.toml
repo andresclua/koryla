@@ -1,6 +1,6 @@
 [build]
-  command = "pnpm install && pnpm --filter app build && echo '=== app/.output ===' && ls -la app/.output/ 2>/dev/null || echo 'NO .output DIR'"
-  publish = "app/.output/public"
+  command = "pnpm install && pnpm --filter app build && mkdir -p app/.netlify/static"
+  publish = "app/.netlify/static"
 
 [build.environment]
   NODE_VERSION = "20"
