@@ -12,6 +12,18 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      script: [
+        {
+          src: 'https://www.googletagmanager.com/gtag/js?id=G-5X1YJG3CYK',
+          async: true,
+        },
+        {
+          innerHTML: `window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-5X1YJG3CYK');`,
+        },
+      ],
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
