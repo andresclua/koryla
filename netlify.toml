@@ -1,6 +1,6 @@
 [build]
-  command = "pnpm install && pnpm --filter app build && mkdir -p app/.netlify/static"
-  publish = "app/.netlify/static"
+  command = "pnpm install && pnpm --filter app build"
+  publish = "app/dist"
   functions = "app/.netlify/functions-internal"
 
 [build.environment]
