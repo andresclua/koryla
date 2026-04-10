@@ -24,5 +24,14 @@ export default defineContentConfig({
         slug: z.string(),
       }),
     }),
+    legal: defineCollection({
+      type: 'page',
+      source: 'legal/*.md',
+      schema: z.object({
+        title: z.string(),
+        slug: z.string(),
+        updatedAt: z.string(),
+      }),
+    }),
   },
 })

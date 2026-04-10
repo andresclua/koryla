@@ -382,6 +382,8 @@ onUnmounted(() => clearInterval(interval))
         <div class="flex items-center gap-6 text-sm text-gray-400">
           <NuxtLink to="/docs" class="hover:text-gray-600 transition-colors">Docs</NuxtLink>
           <NuxtLink to="/blog" class="hover:text-gray-600 transition-colors">Blog</NuxtLink>
+          <NuxtLink to="/privacy" class="hover:text-gray-600 transition-colors">Privacy</NuxtLink>
+          <NuxtLink to="/terms" class="hover:text-gray-600 transition-colors">Terms</NuxtLink>
           <NuxtLink to="/login" class="hover:text-gray-600 transition-colors">Log in</NuxtLink>
         </div>
         <p class="text-sm text-gray-400">© 2026 Koryla. All rights reserved.</p>
