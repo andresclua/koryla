@@ -256,11 +256,22 @@ const clearFilters = () => { search.value = ''; filterStatus.value = 'all'; filt
               </span>
               <KTooltip :text="exp.type === 'component' ? 'Runs inside a React/Vue/Astro component using the @koryla library' : 'Runs at the server before the page renders — zero flicker, no JS needed'">
                 <span
-                  class="text-[11px] font-semibold px-2 py-0.5 rounded-full cursor-default"
+                  class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full cursor-default"
                   :style="exp.type === 'component'
                     ? 'background: #FEF0E8; color: #C96A3F;'
                     : 'background: #EEF2FF; color: #4338CA;'"
-                >{{ exp.type === 'component' ? 'SDK' : 'Edge' }}</span>
+                >
+                  <!-- eye icon for SDK/component -->
+                  <svg v-if="exp.type === 'component'" class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <!-- zap icon for Edge -->
+                  <svg v-else class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  {{ exp.type === 'component' ? 'SDK' : 'Edge' }}
+                </span>
               </KTooltip>
             </div>
             <p class="text-xs text-gray-400 mt-1 truncate font-mono">{{ exp.base_url }}</p>

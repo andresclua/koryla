@@ -1,3 +1,3 @@
-export { createKoryla } from './server.ts'
-export type { VariantResult } from './server.ts'
-export { Experiment, Variant } from './components.tsx'
+export { createKoryla } from './server'
+export type { VariantResult } from './server'
+export { Experiment, Variant } from './components'

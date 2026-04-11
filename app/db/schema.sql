@@ -15,6 +15,7 @@ create table workspaces (
   trial_ends_at timestamptz,
   custom_domain text,                   -- white-label (agency+)
   custom_logo_url text,
+  is_demo boolean default false,        -- demo workspace shown to all users as read-only
   created_at timestamptz default now()
 );
 create index on workspaces (domain);

@@ -81,8 +81,15 @@ importers:
   plugin/packages/astro:
     dependencies:
       '@koryla/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.9)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
 
   plugin/packages/core:
     devDependencies:
@@ -124,19 +131,36 @@ importers:
   plugin/packages/react:
     dependencies:
       '@koryla/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
       react:
-        specifier: '>=18'
+        specifier: ^19
         version: 19.2.5
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.9)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
 
   plugin/packages/vue:
     dependencies:
       '@koryla/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.9)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
       vue:
-        specifier: '>=3'
+        specifier: ^3
         version: 3.5.32(typescript@5.9.3)
 
   worker:
@@ -2393,6 +2417,9 @@ packages:
   '@types/parse-path@7.1.0':
     resolution: {integrity: sha512-EULJ8LApcVEPbrfND0cRQqutIOdiIgJ1Mgrhpy755r14xMohPTEpkV/k28SJvuOs9bHRFW8x+KeDAEPiGQPB9Q==}
     deprecated: This is a stub types definition. parse-path provides its own type definitions, so you do not need this installed.
+
+  '@types/react@19.2.14':
+    resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
@@ -8361,6 +8388,10 @@ snapshots:
   '@types/parse-path@7.1.0':
     dependencies:
       parse-path: 7.1.0
+
+  '@types/react@19.2.14':
+    dependencies:
+      csstype: 3.2.3
 
   '@types/resolve@1.20.2': {}
 
