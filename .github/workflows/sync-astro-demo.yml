@@ -1,6 +1,7 @@
 name: Sync astro-demo-internal → astro-demo-example
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
