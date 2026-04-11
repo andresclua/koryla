@@ -47,6 +47,27 @@ watch(page, (p) => {
       <span class="text-gray-700 font-medium">{{ page!.title }}</span>
     </div>
 
+    <!-- SDK framework switcher — shown only on SDK section pages -->
+    <div v-if="page!.section === 'SDK'" class="flex flex-wrap gap-2 mb-8">
+      <NuxtLink
+        v-for="fw in [
+          { slug: 'sdk',           label: 'Overview'     },
+          { slug: 'sdk-react',     label: 'React / Next.js' },
+          { slug: 'sdk-vue',       label: 'Vue / Nuxt'   },
+          { slug: 'sdk-astro',     label: 'Astro'        },
+          { slug: 'sdk-wordpress', label: 'WordPress'    },
+        ]"
+        :key="fw.slug"
+        :to="`/docs/${fw.slug}`"
+        class="px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors"
+        :class="fw.slug === page!.slug
+          ? 'bg-[#C96A3F] text-white border-[#C96A3F]'
+          : 'bg-white text-gray-600 border-gray-200 hover:border-[#F0C9B0] hover:text-[#C96A3F]'"
+      >
+        {{ fw.label }}
+      </NuxtLink>
+    </div>
+
     <!-- Content -->
     <div class="prose prose-gray max-w-none
       prose-headings:font-semibold prose-headings:tracking-tight prose-headings:scroll-mt-24
