@@ -19,17 +19,39 @@
 | 13 | Landing page (koryla.com) |
 | 14 | Demo interactiva (astro-demo.koryla.com) + eventos reales en Supabase |
 | 15 | SDK components (@koryla/react, @koryla/vue, @koryla/astro, @koryla/next, @koryla/node) |
+| 15.1 | Blog — 11 artículos (CRO, edge testing, flicker, stats, WordPress, BoostifyJS, etc.) |
 
 ## Pendiente
 
+### Bugs & fixes
+
 | Fase | Descripción | Notas |
 |------|-------------|-------|
-| 16 | **Proxy gestionado** (`proxy.koryla.com`) | Cloudflare for SaaS — opción sin-código para no-técnicos. Post-launch. |
-| 17 | **QA & CI/CD** | Tests unitarios, integración, GitHub Actions pipeline |
 | 17.5 | **Revisión de docs** | `how-it-works.md` Cloudflare-only — hacer agnóstico a la plataforma |
-| 17.6 | **Fix Google OAuth** | Muestra "supabase.co" en el selector de cuenta — cambiar nombre de app y dominio en Google Cloud Console |
-| 17.7 | **Fix conversion rate 0.0%** | Los experimentos no tienen `conversion_url` configurada o la URL no se está visitando — verificar datos en Supabase y flujo en edge function |
-| 17.8 | **Emails Resend** | FROM hardcodeado a `onboarding@resend.dev` — usar dominio propio. Faltan: verificación de email, reset de contraseña |
-| 17.9 | **Blog analytics para admin** | El admin dashboard no muestra datos de blog. Integrar GA4 o pageviews en `/admin` |
-| 17.10 | **SDK demo — anotaciones visuales** | Añadir etiquetas "Style variation" / "Text variation" en `/sdk-demo` para que se entienda qué se está testeando |
-| 18 | **Launch** | Meta: 2026-05-10 |
+| 17.6 | **Fix Google OAuth** | Muestra "supabase.co" en el selector de cuenta — cambiar en Google Cloud Console: nombre de app → "Koryla", dominio autorizado → `koryla.com` |
+| 17.7 | **Fix conversion rate 0.0%** | Verificar que los experimentos tienen `conversion_url` configurada y que esa URL se está visitando. Revisar datos en Supabase tabla `events` |
+| 17.8 | **Emails Resend** | FROM hardcodeado a `onboarding@resend.dev`. Pendiente: dominio propio, verificación de email, reset de contraseña |
+| 17.9 | **Blog analytics en admin** | El admin dashboard no muestra datos de blog. Integrar GA4 Reporting API o pageviews en `/admin` |
+| 17.10 | **SDK demo — anotaciones visuales** | Añadir etiquetas "Style variation" / "Text variation" sobre el contenido de `/sdk-demo` |
+
+### SEO & visibilidad
+
+| Fase | Descripción | Notas |
+|------|-------------|-------|
+| 17.11 | **llms.txt** | Archivo `/public/llms.txt` con descripción del producto, casos de uso, links a docs y blog — para que LLMs entiendan qué es Koryla |
+| 17.12 | **SEO técnico** | `<meta>` tags en todas las páginas (title, description, OG, Twitter card), sitemap.xml, robots.txt, canonical URLs |
+| 17.13 | **Blog SEO** | Añadir `og:image` por post, structured data (Article schema), reading time estimado |
+| 17.14 | **Landing page SEO** | H1/H2 con keywords target, alt text en imágenes, Core Web Vitals limpios |
+
+### Infra & calidad
+
+| Fase | Descripción | Notas |
+|------|-------------|-------|
+| 17 | **QA & CI/CD** | Tests unitarios, integración, GitHub Actions pipeline |
+| 16 | **Proxy gestionado** (`proxy.koryla.com`) | Cloudflare for SaaS — post-launch |
+
+### Launch
+
+| Fase | Descripción | Notas |
+|------|-------------|-------|
+| 18 | **Launch** | Meta: 2026-05-10 — checklist: SEO ✓, emails ✓, OAuth ✓, conversion rate ✓, docs ✓ |
