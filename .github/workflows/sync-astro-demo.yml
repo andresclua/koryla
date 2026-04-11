@@ -17,13 +17,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Push subtree to koryla-astro-demo-example
+      - name: Push to koryla-astro-demo-example
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote add astro-demo https://andresclua:${GH_PAT}@github.com/andresclua/koryla-astro-demo-example.git
-          git subtree split --prefix=astro-demo-internal -b astro-demo-sync
-          git push astro-demo astro-demo-sync:main --force
-          git branch -D astro-demo-sync
+
+          cp -r astro-demo-internal /tmp/astro-demo-target
+
+          cd /tmp/astro-demo-target
+          git init
+          git checkout -b main
+          git remote add origin https://andresclua:${GH_PAT}@github.com/andresclua/koryla-astro-demo-example.git
+          git add -A
+          git commit -m "sync: $(date -u +'%Y-%m-%d %H:%M:%S')"
+          git push origin main --force
