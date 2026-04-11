@@ -1,8 +1,8 @@
 ---
 title: How to Write A/B Test Hypotheses That Actually Teach You Something
 description: Most test hypotheses are too vague to be useful even when the test wins. Here's the format that produces learning, not just lift numbers.
-date: 2026-03-20
-author: Andrés Clúa
+date: 2026-02-17
+author: Koryla Team
 slug: writing-better-ab-test-hypotheses
 ---
 

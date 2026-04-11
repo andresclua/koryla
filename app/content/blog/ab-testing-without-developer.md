@@ -1,8 +1,8 @@
 ---
 title: How to Run Your First A/B Test Without Bothering a Developer
 description: Most A/B testing setups require engineering time. Here's how to run real experiments — without a ticket queue.
-date: 2026-02-20
-author: Andrés Clúa
+date: 2025-12-09
+author: Koryla Team
 slug: ab-testing-without-developer
 ---
 

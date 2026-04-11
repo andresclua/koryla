@@ -1,8 +1,8 @@
 ---
 title: Ad Blockers Are Killing Your A/B Test Data — And You Probably Don't Know It
 description: Client-side testing tools are blocked by ad blockers at rates between 20–40% of traffic. Here's what that means for your results, and how server-side testing fixes it.
-date: 2026-03-05
-author: Andrés Clúa
+date: 2025-12-23
+author: Koryla Team
 slug: ad-blockers-killing-ab-test-data
 ---
 

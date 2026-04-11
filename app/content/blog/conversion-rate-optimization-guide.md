@@ -1,8 +1,8 @@
 ---
 title: The CRO Guide for 2026 — What Actually Moves the Needle
 description: Conversion rate optimization has a lot of noise and a little signal. Here's what experienced teams do differently.
-date: 2026-02-10
-author: Andrés Clúa
+date: 2025-10-28
+author: Koryla Team
 slug: conversion-rate-optimization-guide
 ---
 

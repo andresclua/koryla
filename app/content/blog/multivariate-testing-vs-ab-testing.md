@@ -1,8 +1,8 @@
 ---
 title: Multivariate Testing vs A/B Testing — When to Use Which
 description: Multivariate tests sound more powerful. They often produce worse results. Here's when each approach is the right call.
-date: 2026-03-12
-author: Andrés Clúa
+date: 2026-01-06
+author: Koryla Team
 slug: multivariate-testing-vs-ab-testing
 ---
 

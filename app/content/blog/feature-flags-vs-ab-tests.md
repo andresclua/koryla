@@ -1,8 +1,8 @@
 ---
 title: Feature Flags vs A/B Tests — They're Not the Same Thing
 description: Teams often use feature flags and A/B tests interchangeably. They solve different problems. Conflating them leads to bad decisions.
-date: 2026-04-02
-author: Andrés Clúa
+date: 2026-01-20
+author: Koryla Team
 slug: feature-flags-vs-ab-tests
 ---
 

@@ -2,7 +2,7 @@
 title: How to A/B Test Your SaaS Pricing Page (And What to Actually Test)
 description: The pricing page is the highest-leverage page on most SaaS sites. Here's a systematic approach to testing it without destroying trust or confusing users.
 date: 2026-04-10
-author: Andrés Clúa
+author: Koryla Team
 slug: ab-testing-saas-pricing-page
 ---
 

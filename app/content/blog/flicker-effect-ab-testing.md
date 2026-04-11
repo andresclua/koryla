@@ -1,8 +1,8 @@
 ---
 title: The Flicker Effect — Why It Happens, What It Costs, and How to Eliminate It
 description: The flicker effect is the most visible symptom of client-side A/B testing. It also biases your results in ways most teams don't account for.
-date: 2026-04-08
-author: Andrés Clúa
+date: 2026-03-25
+author: Koryla Team
 slug: flicker-effect-ab-testing
 ---
 

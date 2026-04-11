@@ -1,8 +1,8 @@
 ---
 title: Statistical Significance in A/B Testing — What You Actually Need to Know
 description: Everyone quotes 95% confidence. Almost nobody can explain what it means. Here's the honest explanation, with practical implications for your tests.
-date: 2026-02-28
-author: Andrés Clúa
+date: 2025-11-25
+author: Koryla Team
 slug: statistical-significance-ab-testing
 ---
 

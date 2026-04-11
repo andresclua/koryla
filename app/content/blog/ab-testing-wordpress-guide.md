@@ -1,8 +1,8 @@
 ---
 title: A/B Testing for WordPress — A Complete Guide for 2026
 description: WordPress powers 43% of the web. Here's how to run proper A/B tests on a WordPress site without slowing it down or breaking your SEO.
-date: 2026-03-28
-author: Andrés Clúa
+date: 2026-03-17
+author: Koryla Team
 slug: ab-testing-wordpress-guide
 ---
 

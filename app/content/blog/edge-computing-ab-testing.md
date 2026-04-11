@@ -1,8 +1,8 @@
 ---
 title: How Edge Computing Changed A/B Testing Forever
 description: For 20 years, A/B testing ran in the browser. Edge computing moved it to the network layer. Here's why that shift matters and what it enables.
-date: 2026-04-05
-author: Andrés Clúa
+date: 2026-03-03
+author: Koryla Team
 slug: edge-computing-ab-testing
 ---
 
