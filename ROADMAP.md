@@ -24,7 +24,12 @@
 
 | Fase | Descripción | Notas |
 |------|-------------|-------|
-| 16 | **Proxy gestionado** (`proxy.koryla.com`) | Cloudflare for SaaS — opción sin-código para no-técnicos |
-| 17 | **QA & CI/CD** | Tests, pipeline |
-| 17.5 | **Revisión de docs** | `how-it-works.md` describe el flow como Cloudflare-only — hacer agnóstico a la plataforma igual que `getting-started.md` |
+| 16 | **Proxy gestionado** (`proxy.koryla.com`) | Cloudflare for SaaS — opción sin-código para no-técnicos. Post-launch. |
+| 17 | **QA & CI/CD** | Tests unitarios, integración, GitHub Actions pipeline |
+| 17.5 | **Revisión de docs** | `how-it-works.md` Cloudflare-only — hacer agnóstico a la plataforma |
+| 17.6 | **Fix Google OAuth** | Muestra "supabase.co" en el selector de cuenta — cambiar nombre de app y dominio en Google Cloud Console |
+| 17.7 | **Fix conversion rate 0.0%** | Los experimentos no tienen `conversion_url` configurada o la URL no se está visitando — verificar datos en Supabase y flujo en edge function |
+| 17.8 | **Emails Resend** | FROM hardcodeado a `onboarding@resend.dev` — usar dominio propio. Faltan: verificación de email, reset de contraseña |
+| 17.9 | **Blog analytics para admin** | El admin dashboard no muestra datos de blog. Integrar GA4 o pageviews en `/admin` |
+| 17.10 | **SDK demo — anotaciones visuales** | Añadir etiquetas "Style variation" / "Text variation" en `/sdk-demo` para que se entienda qué se está testeando |
 | 18 | **Launch** | Meta: 2026-05-10 |
