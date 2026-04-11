@@ -143,6 +143,19 @@ const removeMember = async (id: string) => {
 const isOwner = computed(() => currentWorkspace.value?.role === 'owner')
 
 const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+// ── Demo workspace ────────────────────────────────────────
+const showDemo = ref(true)
+onMounted(() => {
+  const stored = localStorage.getItem('koryla-show-demo')
+  if (stored !== null) showDemo.value = stored !== 'false'
+})
+const toggleDemo = (val: boolean) => {
+  showDemo.value = val
+  localStorage.setItem('koryla-show-demo', String(val))
+  // Refresh page so sidebar updates
+  window.location.reload()
+}
 </script>
 
 <template>
@@ -303,6 +316,26 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { mont
             <button class="text-xs text-[#C96A3F] font-medium shrink-0" @click="copyInvite">Copy</button>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Demo workspace -->
+    <section class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-900">Demo workspace</h2>
+        <p class="text-xs text-gray-400 mt-0.5">A read-only workspace with real experiments running on <span class="font-mono">astro-demo.koryla.com</span></p>
+      </div>
+      <div class="px-6 py-5 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-700">Show in sidebar</p>
+          <p class="text-xs text-gray-400 mt-0.5">When you're familiar with Koryla, you can hide it to keep the sidebar clean.</p>
+        </div>
+        <button
+          :class="['relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none', showDemo ? 'bg-[#C96A3F]' : 'bg-gray-200']"
+          @click="toggleDemo(!showDemo)"
+        >
+          <span :class="['inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform', showDemo ? 'translate-x-6' : 'translate-x-1']" />
+        </button>
       </div>
     </section>
 

@@ -11,9 +11,9 @@ if (!currentWorkspace.value) await navigateTo('/dashboard', { replace: true })
 const slug = currentWorkspace.value!.slug
 
 // ── Experiments ───────────────────────────────────────────
-interface Variant { id: string; name: string; traffic_weight: number; target_url: string; is_control: boolean; impressions: number }
+interface Variant { id: string; name: string; description?: string; traffic_weight: number; target_url: string; is_control: boolean; impressions: number }
 interface Experiment {
-  id: string; name: string; status: string; base_url: string
+  id: string; name: string; status: string; type: 'edge' | 'component'; base_url: string
   created_at: string; started_at: string | null; ended_at: string | null
   variants: Variant[]; total_impressions: number; total_conversions: number
 }
@@ -24,14 +24,15 @@ const { data: experiments, refresh } = await useFetch<Experiment[]>(`/api/worksp
 const showPanel = ref(false)
 const saving = ref(false)
 
-interface VariantDraft { name: string; target_url: string; traffic_weight: number; is_control: boolean }
+interface VariantDraft { name: string; description: string; target_url: string; traffic_weight: number; is_control: boolean }
 const form = reactive({
   name: '',
+  type: 'edge' as 'edge' | 'component',
   base_url: '',
   conversion_url: '',
   variants: [
-    { name: 'Control', target_url: '', traffic_weight: 50, is_control: true },
-    { name: 'Variant B', target_url: '', traffic_weight: 50, is_control: false },
+    { name: 'Control', description: '', target_url: '', traffic_weight: 50, is_control: true },
+    { name: 'Variant B', description: '', target_url: '', traffic_weight: 50, is_control: false },
   ] as VariantDraft[],
 })
 
@@ -39,7 +40,7 @@ const totalWeight = computed(() => form.variants.reduce((s, v) => s + v.traffic_
 
 const addVariant = () => {
   const remaining = 100 - totalWeight.value
-  form.variants.push({ name: `Variant ${String.fromCharCode(65 + form.variants.length)}`, target_url: '', traffic_weight: Math.max(0, remaining), is_control: false })
+  form.variants.push({ name: `Variant ${String.fromCharCode(65 + form.variants.length)}`, description: '', target_url: '', traffic_weight: Math.max(0, remaining), is_control: false })
 }
 
 const removeVariant = (i: number) => {
@@ -48,10 +49,10 @@ const removeVariant = (i: number) => {
 }
 
 const resetForm = () => {
-  form.name = ''; form.base_url = ''; form.conversion_url = ''
+  form.name = ''; form.type = 'edge'; form.base_url = ''; form.conversion_url = ''
   form.variants = [
-    { name: 'Control', target_url: '', traffic_weight: 50, is_control: true },
-    { name: 'Variant B', target_url: '', traffic_weight: 50, is_control: false },
+    { name: 'Control', description: '', target_url: '', traffic_weight: 50, is_control: true },
+    { name: 'Variant B', description: '', target_url: '', traffic_weight: 50, is_control: false },
   ]
 }
 
@@ -64,7 +65,7 @@ const createExperiment = async () => {
   try {
     await $fetch(`/api/workspaces/${slug}/experiments`, {
       method: 'POST',
-      body: { name: form.name, base_url: form.base_url, conversion_url: form.conversion_url || undefined, variants: form.variants },
+      body: { name: form.name, type: form.type, base_url: form.base_url, conversion_url: form.conversion_url || undefined, variants: form.variants },
     })
     await refresh()
     closePanel()
@@ -120,6 +121,38 @@ const statusConfig: Record<string, { label: string; class: string }> = {
 
 const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_conversions / exp.total_impressions) * 100).toFixed(1) + '%' : '—'
+
+// ── Filters ───────────────────────────────────────────────
+const search = ref('')
+const filterStatus = ref('all')
+const filterType = ref('all')
+
+const statusFilters = [
+  { value: 'all',       label: 'All' },
+  { value: 'active',    label: 'Active' },
+  { value: 'paused',    label: 'Paused' },
+  { value: 'draft',     label: 'Draft' },
+  { value: 'completed', label: 'Completed' },
+]
+
+const typeFilters = [
+  { value: 'all',       label: 'All types' },
+  { value: 'edge',      label: 'Edge' },
+  { value: 'component', label: 'SDK' },
+]
+
+const filteredExperiments = computed(() => {
+  return (experiments.value ?? []).filter(exp => {
+    const matchSearch = !search.value || exp.name.toLowerCase().includes(search.value.toLowerCase()) || exp.base_url.toLowerCase().includes(search.value.toLowerCase())
+    const matchStatus = filterStatus.value === 'all' || exp.status === filterStatus.value
+    const matchType   = filterType.value === 'all' || exp.type === filterType.value
+    return matchSearch && matchStatus && matchType
+  })
+})
+
+const hasActiveFilters = computed(() => search.value || filterStatus.value !== 'all' || filterType.value !== 'all')
+
+const clearFilters = () => { search.value = ''; filterStatus.value = 'all'; filterType.value = 'all' }
 </script>
 
 <template>
@@ -135,6 +168,7 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
         </p>
       </div>
       <button
+        v-if="!currentWorkspace?.is_demo"
         class="inline-flex items-center gap-2 bg-[#C96A3F] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#A8522D] transition-colors"
         @click="openPanel"
       >
@@ -143,6 +177,46 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
         </svg>
         New experiment
       </button>
+      <span v-else class="text-xs text-gray-400 bg-gray-100 px-3 py-2 rounded-lg">Read-only demo</span>
+    </div>
+
+    <!-- Filters -->
+    <div v-if="experiments?.length" class="flex flex-wrap items-center gap-3 mb-5">
+      <!-- Search -->
+      <div class="relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          v-model="search" type="text" placeholder="Search experiments…"
+          class="pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C96A3F] w-52 placeholder:text-gray-300"
+        />
+      </div>
+
+      <!-- Status pills -->
+      <div class="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+        <button
+          v-for="f in statusFilters" :key="f.value"
+          :class="['px-3 py-1.5 text-xs font-medium rounded-lg transition-all', filterStatus === f.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700']"
+          @click="filterStatus = f.value"
+        >{{ f.label }}</button>
+      </div>
+
+      <!-- Type pills -->
+      <div class="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+        <button
+          v-for="f in typeFilters" :key="f.value"
+          :class="['px-3 py-1.5 text-xs font-medium rounded-lg transition-all', filterType === f.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700']"
+          @click="filterType = f.value"
+        >{{ f.label }}</button>
+      </div>
+
+      <!-- Clear -->
+      <button v-if="hasActiveFilters" class="text-xs text-gray-400 hover:text-gray-600 transition-colors" @click="clearFilters">
+        Clear filters
+      </button>
+
+      <span class="ml-auto text-xs text-gray-400">{{ filteredExperiments.length }} of {{ experiments?.length }}</span>
     </div>
 
     <!-- Empty state -->
@@ -157,93 +231,121 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
       <button class="text-sm font-medium text-[#C96A3F] hover:text-[#A8522D]" @click="openPanel">Create experiment →</button>
     </div>
 
+    <!-- No results -->
+    <div v-else-if="experiments?.length && !filteredExperiments.length" class="border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center">
+      <p class="text-sm font-semibold text-gray-900 mb-1">No experiments match</p>
+      <p class="text-sm text-gray-400 mb-4">Try adjusting your filters or search term.</p>
+      <button class="text-sm font-medium text-[#C96A3F] hover:text-[#A8522D]" @click="clearFilters">Clear filters</button>
+    </div>
+
     <!-- Experiment list -->
     <div v-else class="space-y-3">
       <div
-        v-for="exp in experiments" :key="exp.id"
-        class="bg-white border border-gray-200 rounded-2xl overflow-hidden"
+        v-for="exp in filteredExperiments" :key="exp.id"
+        class="bg-white border border-gray-200 rounded-2xl overflow-hidden transition-shadow duration-150 hover:shadow-md hover:border-gray-300"
       >
         <!-- Experiment header -->
-        <div class="px-6 py-4 flex items-start gap-4">
+        <div class="px-6 pt-5 pb-4 flex items-start gap-4">
           <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="flex items-center gap-2 flex-wrap">
               <NuxtLink :to="`/dashboard/${slug}/experiments/${exp.id}`" class="text-sm font-semibold text-gray-900 hover:text-[#C96A3F] transition-colors">
                 {{ exp.name }}
               </NuxtLink>
-              <span :class="['text-xs font-medium px-2 py-0.5 rounded-full', statusConfig[exp.status]?.class]">
+              <span :class="['text-[11px] font-semibold px-2 py-0.5 rounded-full', statusConfig[exp.status]?.class]">
                 {{ statusConfig[exp.status]?.label }}
               </span>
+              <KTooltip :text="exp.type === 'component' ? 'Runs inside a React/Vue/Astro component using the @koryla library' : 'Runs at the server before the page renders — zero flicker, no JS needed'">
+                <span
+                  class="text-[11px] font-semibold px-2 py-0.5 rounded-full cursor-default"
+                  :style="exp.type === 'component'
+                    ? 'background: #FEF0E8; color: #C96A3F;'
+                    : 'background: #EEF2FF; color: #4338CA;'"
+                >{{ exp.type === 'component' ? 'SDK' : 'Edge' }}</span>
+              </KTooltip>
             </div>
-            <p class="text-xs text-gray-400 mt-1 truncate">{{ exp.base_url }}</p>
+            <p class="text-xs text-gray-400 mt-1 truncate font-mono">{{ exp.base_url }}</p>
           </div>
 
           <!-- Stats -->
           <div class="hidden sm:flex items-center gap-6 text-center shrink-0">
             <div>
-              <p class="text-sm font-semibold text-gray-900">{{ exp.total_impressions.toLocaleString() }}</p>
-              <p class="text-xs text-gray-400">Impressions</p>
+              <p class="text-sm font-semibold text-gray-900 tabular-nums">{{ exp.total_impressions.toLocaleString() }}</p>
+              <p class="text-[11px] text-gray-400 flex items-center justify-center gap-1 mt-0.5">
+                Impressions
+                <KTooltip text="Times a visitor saw a variant — each visitor is counted once" />
+              </p>
             </div>
             <div>
-              <p class="text-sm font-semibold text-gray-900">{{ conversionRate(exp) }}</p>
-              <p class="text-xs text-gray-400">Conv. rate</p>
+              <p class="text-sm font-semibold text-gray-900 tabular-nums">{{ conversionRate(exp) }}</p>
+              <p class="text-[11px] text-gray-400 flex items-center justify-center gap-1 mt-0.5">
+                Conv. rate
+                <KTooltip text="% of visitors who reached the conversion URL after seeing a variant" />
+              </p>
             </div>
             <div>
-              <p class="text-sm font-semibold text-gray-900">{{ exp.variants.length }}</p>
-              <p class="text-xs text-gray-400">Variants</p>
+              <p class="text-sm font-semibold text-gray-900 tabular-nums">{{ exp.variants.length }}</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">Variants</p>
             </div>
           </div>
 
           <!-- Actions -->
-          <div class="flex items-center gap-2 shrink-0">
+          <div v-if="!currentWorkspace?.is_demo" class="flex items-center gap-1.5 shrink-0">
             <button
               v-if="exp.status === 'draft' || exp.status === 'paused'"
               :disabled="updatingId === exp.id"
               class="text-xs font-medium text-green-600 hover:text-green-700 px-3 py-1.5 rounded-lg border border-green-200 hover:bg-green-50 transition-colors disabled:opacity-40"
               @click="setStatus(exp, 'active')"
             >Start</button>
+            <KTooltip v-if="exp.status === 'active'" text="Pauses the experiment — no new assignments, existing visitors keep their variant">
+              <button
+                :disabled="updatingId === exp.id"
+                class="text-xs font-medium text-amber-600 hover:text-amber-700 px-3 py-1.5 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors disabled:opacity-40"
+                @click="setStatus(exp, 'paused')"
+              >Pause</button>
+            </KTooltip>
+            <KTooltip v-if="exp.status === 'active' || exp.status === 'paused'" text="Ends the experiment permanently and locks the results">
+              <button
+                :disabled="updatingId === exp.id"
+                class="text-xs font-medium text-[#0F2235] hover:text-[#C96A3F] px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-[#FEF0E8] transition-colors disabled:opacity-40"
+                @click="setStatus(exp, 'completed')"
+              >Complete</button>
+            </KTooltip>
             <button
-              v-if="exp.status === 'active'"
-              :disabled="updatingId === exp.id"
-              class="text-xs font-medium text-amber-600 hover:text-amber-700 px-3 py-1.5 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors disabled:opacity-40"
-              @click="setStatus(exp, 'paused')"
-            >Pause</button>
-            <button
-              v-if="exp.status === 'active' || exp.status === 'paused'"
-              :disabled="updatingId === exp.id"
-              class="text-xs font-medium text-[#0F2235] hover:text-[#C96A3F] px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-[#FEF0E8] transition-colors disabled:opacity-40"
-              @click="setStatus(exp, 'completed')"
-            >Complete</button>
-            <button
-              class="text-xs text-red-400 hover:text-red-600 px-2 py-1.5 transition-colors"
+              class="text-xs text-gray-300 hover:text-red-400 px-2 py-1.5 transition-colors"
               @click="deleteExperiment(exp)"
-            >Delete</button>
+            >
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
           </div>
         </div>
 
         <!-- Variants bar -->
-        <div class="px-6 pb-4">
-          <div class="flex h-1.5 rounded-full overflow-hidden gap-px">
+        <div class="px-6 pb-5">
+          <div class="flex h-1 rounded-full overflow-hidden gap-px mb-2.5">
             <div
               v-for="v in exp.variants" :key="v.id"
               :style="{ width: v.traffic_weight + '%' }"
-              :class="v.is_control ? 'bg-gray-400' : 'bg-[#C96A3F]'"
+              :class="v.is_control ? 'bg-gray-300' : 'bg-[#C96A3F]'"
             />
           </div>
-          <div class="flex items-center gap-4 mt-2 flex-wrap">
-            <div v-for="v in exp.variants" :key="v.id" class="flex items-center gap-1.5">
-              <div :class="['w-2 h-2 rounded-full shrink-0', v.is_control ? 'bg-gray-400' : 'bg-[#C96A3F]']" />
-              <span class="text-xs text-gray-600">{{ v.name }}</span>
-              <span class="text-xs text-gray-400">{{ v.traffic_weight }}%</span>
-              <span v-if="exp.total_impressions" class="text-xs text-gray-400">· {{ v.impressions.toLocaleString() }} imp</span>
+          <div class="flex items-start gap-5 flex-wrap">
+            <div v-for="v in exp.variants" :key="v.id" class="flex items-start gap-1.5">
+              <div :class="['w-2 h-2 rounded-full shrink-0 mt-[3px]', v.is_control ? 'bg-gray-300' : 'bg-[#C96A3F]']" />
+              <div>
+                <span class="text-xs text-gray-700 font-medium">{{ v.name }}</span>
+                <span class="text-xs text-gray-400 ml-1">{{ v.traffic_weight }}%</span>
+                <span v-if="exp.total_impressions" class="text-xs text-gray-400"> · {{ v.impressions.toLocaleString() }} imp</span>
+                <p v-if="v.description" class="text-[11px] text-gray-400 mt-0.5 leading-relaxed italic">{{ v.description }}</p>
+              </div>
+            </div>
+            <div class="ml-auto">
+              <NuxtLink :to="`/dashboard/${slug}/experiments/${exp.id}`" class="text-xs text-gray-400 hover:text-[#C96A3F] transition-colors">
+                View details →
+              </NuxtLink>
             </div>
           </div>
-        </div>
-
-        <div class="px-6 py-2.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-          <p class="text-xs text-gray-400">Created {{ formatDate(exp.created_at) }}</p>
-          <NuxtLink :to="`/dashboard/${slug}/experiments/${exp.id}`" class="text-xs text-[#C96A3F] hover:text-[#A8522D] font-medium">
-            View details →
-          </NuxtLink>
         </div>
       </div>
     </div>
@@ -270,58 +372,111 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
             </div>
 
             <!-- Panel body -->
-            <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+            <div class="flex-1 overflow-y-auto px-6 py-6 space-y-8">
 
-              <!-- Basic info -->
+              <!-- Step 1: Type -->
               <div class="space-y-4">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-5 h-5 rounded-full bg-gray-900 text-white text-[10px] font-bold flex items-center justify-center shrink-0">1</span>
+                  <p class="text-sm font-semibold text-gray-800">Choose type</p>
+                </div>
+
+                <!-- Type -->
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Experiment name</label>
-                  <input v-model="form.name" type="text" placeholder="Homepage hero test"
-                    class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F]" />
+                  <div class="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      :class="['flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-colors text-left', form.type === 'edge' ? 'border-[#4338CA] bg-[#EEF2FF] text-[#4338CA]' : 'border-gray-200 text-gray-500 hover:border-gray-300']"
+                      @click="form.type = 'edge'"
+                    >
+                      <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+                      </svg>
+                      <div>
+                        <p>Edge</p>
+                        <p class="text-xs font-normal opacity-70">Worker / Middleware</p>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      :class="['flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-colors text-left', form.type === 'component' ? 'border-[#C96A3F] bg-[#FEF0E8] text-[#C96A3F]' : 'border-gray-200 text-gray-500 hover:border-gray-300']"
+                      @click="form.type = 'component'"
+                    >
+                      <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                      <div>
+                        <p>SDK</p>
+                        <p class="text-xs font-normal opacity-70">React / Vue / Astro</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Step 2: Name & URLs -->
+              <div class="space-y-4">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-5 h-5 rounded-full bg-gray-900 text-white text-[10px] font-bold flex items-center justify-center shrink-0">2</span>
+                  <p class="text-sm font-semibold text-gray-800">Name & URLs</p>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                    Base URL
-                    <span class="text-gray-400 font-normal ml-1">— URL to intercept</span>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Experiment name</label>
+                  <input v-model="form.name" type="text" placeholder="Homepage hero test"
+                    class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F] placeholder:text-gray-300" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">
+                    {{ form.type === 'component' ? 'Page URL' : 'Base URL' }}
+                    <span class="normal-case font-normal ml-1 text-gray-400">{{ form.type === 'component' ? '— where the component renders' : '— URL to intercept' }}</span>
                   </label>
                   <input v-model="form.base_url" type="url" placeholder="https://acme.com/pricing"
-                    class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F]" />
+                    class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F] placeholder:text-gray-300" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">
                     Conversion URL
-                    <span class="text-gray-400 font-normal ml-1">(optional)</span>
+                    <span class="normal-case font-normal ml-1 text-gray-400">(optional)</span>
                   </label>
                   <input v-model="form.conversion_url" type="url" placeholder="https://acme.com/thank-you"
-                    class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F]" />
+                    class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F] placeholder:text-gray-300" />
                 </div>
               </div>
 
-              <!-- Variants -->
+              <!-- Step 3: Variants -->
               <div>
-                <div class="flex items-center justify-between mb-3">
-                  <label class="text-sm font-medium text-gray-700">Variants</label>
-                  <span :class="['text-xs font-medium', totalWeight === 100 ? 'text-green-600' : 'text-red-500']">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-5 h-5 rounded-full bg-gray-900 text-white text-[10px] font-bold flex items-center justify-center shrink-0">3</span>
+                    <p class="text-sm font-semibold text-gray-800">Variants</p>
+                  </div>
+                  <span :class="['text-xs font-semibold px-2 py-0.5 rounded-full', totalWeight === 100 ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500']">
                     {{ totalWeight }}/100
                   </span>
                 </div>
 
-                <div class="space-y-3">
+                <div class="space-y-2.5">
                   <div v-for="(v, i) in form.variants" :key="i"
-                    class="border border-gray-200 rounded-xl p-4 space-y-3">
+                    :class="['border rounded-xl p-4 space-y-3', v.is_control ? 'border-gray-200 bg-gray-50/50' : 'border-gray-200']">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2">
-                        <div :class="['w-2 h-2 rounded-full', v.is_control ? 'bg-gray-400' : 'bg-[#C96A3F]']" />
-                        <input v-model="v.name" type="text" class="text-sm font-medium text-gray-800 bg-transparent focus:outline-none focus:underline w-32" />
+                        <div :class="['w-2 h-2 rounded-full shrink-0', v.is_control ? 'bg-gray-400' : 'bg-[#C96A3F]']" />
+                        <input v-model="v.name" type="text" class="text-sm font-semibold text-gray-800 bg-transparent focus:outline-none border-b border-transparent focus:border-gray-300 w-32 pb-px" />
+                        <span v-if="v.is_control" class="text-[10px] font-semibold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded">CONTROL</span>
                       </div>
                       <button v-if="!v.is_control && form.variants.length > 2"
-                        class="text-xs text-red-400 hover:text-red-600 transition-colors"
+                        class="text-[11px] text-gray-400 hover:text-red-500 transition-colors"
                         @click="removeVariant(i)">Remove</button>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                       <div class="col-span-2">
-                        <input v-model="v.target_url" type="url" placeholder="https://acme.com/pricing-b"
-                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#C96A3F]" />
+                        <input
+                          v-model="v.target_url" type="url"
+                          :placeholder="v.is_control ? 'Leave empty — uses Base URL' : 'https://acme.com/pricing-b'"
+                          :disabled="v.is_control"
+                          :class="['w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#C96A3F] placeholder:text-gray-300', v.is_control ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : '']"
+                        />
                       </div>
                       <div class="flex items-center gap-1.5">
                         <input v-model.number="v.traffic_weight" type="number" min="1" max="99"
@@ -329,10 +484,12 @@ const conversionRate = (exp: Experiment) => exp.total_impressions ? ((exp.total_
                         <span class="text-xs text-gray-400 shrink-0">%</span>
                       </div>
                     </div>
+                    <input v-model="v.description" type="text" placeholder="What's different? e.g. 'Blue CTA button, shorter headline' (optional)"
+                      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#C96A3F] placeholder:text-gray-300" />
                   </div>
                 </div>
 
-                <button class="mt-3 text-sm text-[#C96A3F] hover:text-[#A8522D] font-medium" @click="addVariant">
+                <button class="mt-3 w-full text-sm text-gray-400 hover:text-[#C96A3F] font-medium border border-dashed border-gray-200 hover:border-[#C96A3F] rounded-xl py-2.5 transition-colors" @click="addVariant">
                   + Add variant
                 </button>
               </div>

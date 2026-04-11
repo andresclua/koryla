@@ -9,6 +9,7 @@ export interface Workspace {
   billing_period: 'monthly' | 'yearly' | null
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
+  is_demo: boolean
 }
 
 export const useWorkspace = () => {

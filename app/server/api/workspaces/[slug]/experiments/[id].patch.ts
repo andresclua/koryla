@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
 
   if (body.name) updates.name = body.name.trim()
   if (body.base_url) updates.base_url = body.base_url.trim()
+  if ('conversion_url' in body) updates.conversion_url = body.conversion_url?.trim() || null
 
   if (body.status) {
     updates.status = body.status
@@ -41,6 +42,16 @@ export default defineEventHandler(async (event) => {
 
   if (error) throw createError({ statusCode: 500, message: error.message })
   if (!data) throw createError({ statusCode: 404, message: 'Experiment not found' })
+
+  // Update variant descriptions if provided
+  if (Array.isArray(body.variantDescriptions)) {
+    for (const v of body.variantDescriptions as { id: string; description: string }[]) {
+      await supabase.from('variants')
+        .update({ description: v.description?.trim() || null })
+        .eq('id', v.id)
+        .eq('experiment_id', id)
+    }
+  }
 
   return data
 })

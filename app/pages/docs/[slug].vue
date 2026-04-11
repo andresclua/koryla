@@ -47,8 +47,48 @@ watch(page, (p) => {
       <span class="text-gray-700 font-medium">{{ page!.title }}</span>
     </div>
 
+    <!-- Integrations pages: vertical platform nav + content side by side -->
+    <div v-if="page!.section === 'Integrations'" class="flex gap-8 items-start">
+      <nav class="flex flex-col gap-1 w-40 shrink-0 pt-1">
+        <NuxtLink
+          v-for="p in [
+            { slug: 'integrations',           label: 'Overview'          },
+            { slug: 'integrations-ga4',       label: 'Google Analytics 4'},
+            { slug: 'integrations-posthog',   label: 'PostHog'           },
+            { slug: 'integrations-plausible', label: 'Plausible'         },
+            { slug: 'integrations-mixpanel',  label: 'Mixpanel'          },
+            { slug: 'integrations-amplitude', label: 'Amplitude'         },
+            { slug: 'integrations-webhook',   label: 'Custom Webhook'    },
+          ]"
+          :key="p.slug"
+          :to="`/docs/${p.slug}`"
+          class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+          :class="p.slug === page!.slug
+            ? 'bg-[#FEF0E8] text-[#C96A3F] font-semibold'
+            : 'text-gray-500 hover:text-[#C96A3F] hover:bg-[#FEF0E8]/50'"
+        >
+          {{ p.label }}
+        </NuxtLink>
+      </nav>
+      <div class="prose prose-gray max-w-none min-w-0 flex-1
+        prose-headings:font-semibold prose-headings:tracking-tight prose-headings:scroll-mt-24
+        prose-h1:text-3xl prose-h1:font-bold prose-h1:mb-2
+        prose-h2:text-xl prose-h2:mt-10 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-gray-100
+        prose-h3:text-base prose-h3:mt-6 prose-h3:mb-2
+        prose-a:no-underline hover:prose-a:underline
+        prose-code:bg-[#F0C9B0]/40 prose-code:text-[#A8522D] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-sm prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
+        [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:before:content-none [&_pre_code]:after:content-none
+        prose-pre:bg-gray-50 prose-pre:rounded-xl prose-pre:border prose-pre:border-gray-200 [&_pre]:!p-5
+        prose-table:text-sm prose-th:font-semibold prose-th:bg-gray-50 prose-td:align-top
+        prose-blockquote:not-italic prose-blockquote:rounded-r-lg
+        prose-li:my-0.5
+        [&_a]:text-[#C96A3F] [&_blockquote]:border-[#C96A3F] [&_blockquote]:bg-[#FEF0E8]/60">
+        <ContentRenderer :value="page!" />
+      </div>
+    </div>
+
     <!-- SDK pages: vertical framework nav + content side by side -->
-    <div v-if="page!.section === 'SDK'" class="flex gap-8 items-start">
+    <div v-else-if="page!.section === 'SDK'" class="flex gap-8 items-start">
 
       <!-- Left: vertical framework nav -->
       <nav class="flex flex-col gap-1 w-40 shrink-0 pt-1">

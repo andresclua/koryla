@@ -6,7 +6,7 @@
  *
  * Usage (Nuxt 4 page):
  *   <script setup lang="ts">
- *   import { getKorylaVariant, KExperiment, KVariant } from '@koryla/vue'
+ *   import { getKorylaVariant, reportKorylaConversion, KExperiment, KVariant } from '@koryla/vue'
  *   const headers = useRequestHeaders(['cookie'])
  *   const config = useRuntimeConfig()
  *
@@ -14,6 +14,8 @@
  *     apiKey: config.korylaApiKey,
  *     apiUrl: config.korylaApiUrl,
  *   })
+ *   // On the conversion page:
+ *   // await reportKorylaConversion(result, { apiKey: ..., apiUrl: ... })
  *   </script>
  *
  *   <template>
@@ -34,10 +36,29 @@ export interface VariantResult {
   variantId: string
   isNewAssignment: boolean
   cookieName: string
+  sessionId: string
+}
+
+function generateSessionId(): string {
+  try { return crypto.randomUUID() } catch { return Math.random().toString(36).slice(2) + Date.now().toString(36) }
+}
+
+async function fireEvent(
+  payload: { experiment_id: string; variant_id: string; session_id: string; event_type: 'impression' | 'conversion' },
+  options: SplitEngineOptions,
+): Promise<void> {
+  try {
+    await fetch(`${options.apiUrl}/api/worker/event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${options.apiKey}` },
+      body: JSON.stringify(payload),
+    })
+  } catch { /* network error — don't break rendering */ }
 }
 
 /**
- * Server-side helper — resolves the active variant for an experiment.
+ * Server-side helper — resolves the active variant for an experiment
+ * and fires an impression event to the Koryla API.
  * Call in <script setup> with await (requires Nuxt's useAsyncData or Suspense).
  */
 export async function getKorylaVariant(
@@ -51,6 +72,7 @@ export async function getKorylaVariant(
   if (!experiment || !experiment.variants.length) return null
 
   const cookies = parseCookies(cookieHeader)
+  const sessionId = cookies['ky_session'] ?? generateSessionId()
   const { variantId, isNewAssignment, cookieName } = getVariantFromCookies(
     cookies,
     experimentId,
@@ -58,7 +80,26 @@ export async function getKorylaVariant(
   )
   const variant = experiment.variants.find(v => v.id === variantId)!
 
-  return { experiment, variant, variantId, isNewAssignment, cookieName }
+  // Fire impression — backend deduplicates per session_id
+  fireEvent({ experiment_id: experimentId, variant_id: variantId, session_id: sessionId, event_type: 'impression' }, options)
+
+  return { experiment, variant, variantId, isNewAssignment, cookieName, sessionId }
+}
+
+/**
+ * Report a conversion event for an experiment. Call this server-side on the
+ * conversion page, passing the VariantResult returned by getKorylaVariant.
+ */
+export async function reportKorylaConversion(
+  result: VariantResult,
+  options: SplitEngineOptions,
+): Promise<void> {
+  await fireEvent({
+    experiment_id: result.experiment.id,
+    variant_id: result.variantId,
+    session_id: result.sessionId,
+    event_type: 'conversion',
+  }, options)
 }
 
 const KORYLA_VARIANT_KEY = 'koryla:variantId'

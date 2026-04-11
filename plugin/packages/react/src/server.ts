@@ -27,6 +27,9 @@
  *       </Experiment>
  *     )
  *   }
+ *
+ *   // On the conversion page:
+ *   // await koryla.reportConversion(result)
  */
 
 import { createSplitEngine, parseCookies, getVariantFromCookies } from '@koryla/core'
@@ -38,6 +41,11 @@ export interface VariantResult {
   variantId: string
   isNewAssignment: boolean
   cookieName: string
+  sessionId: string
+}
+
+function generateSessionId(): string {
+  try { return crypto.randomUUID() } catch { return Math.random().toString(36).slice(2) + Date.now().toString(36) }
 }
 
 /**
@@ -48,8 +56,24 @@ export interface VariantResult {
 export function createKoryla(options: SplitEngineOptions) {
   const engine = createSplitEngine(options)
 
+  async function fireEvent(payload: {
+    experiment_id: string
+    variant_id: string
+    session_id: string
+    event_type: 'impression' | 'conversion'
+  }): Promise<void> {
+    try {
+      await fetch(`${options.apiUrl}/api/worker/event`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${options.apiKey}` },
+        body: JSON.stringify(payload),
+      })
+    } catch { /* network error — don't break rendering */ }
+  }
+
   /**
    * Look up the active experiment by ID and assign/read the visitor's variant.
+   * Fires an impression event to the Koryla API (deduplicated server-side by session).
    * Returns null if the experiment doesn't exist or has no variants.
    *
    * @param experimentId  The experiment ID from your Koryla dashboard.
@@ -64,6 +88,7 @@ export function createKoryla(options: SplitEngineOptions) {
     if (!experiment || !experiment.variants.length) return null
 
     const cookies = parseCookies(cookieHeader)
+    const sessionId = cookies['ky_session'] ?? generateSessionId()
     const { variantId, isNewAssignment, cookieName } = getVariantFromCookies(
       cookies,
       experimentId,
@@ -71,8 +96,24 @@ export function createKoryla(options: SplitEngineOptions) {
     )
     const variant = experiment.variants.find(v => v.id === variantId)!
 
-    return { experiment, variant, variantId, isNewAssignment, cookieName }
+    // Fire impression — backend deduplicates per session_id
+    fireEvent({ experiment_id: experimentId, variant_id: variantId, session_id: sessionId, event_type: 'impression' })
+
+    return { experiment, variant, variantId, isNewAssignment, cookieName, sessionId }
   }
 
-  return { getVariant }
+  /**
+   * Report a conversion event. Call this server-side on the conversion page,
+   * passing the VariantResult returned by getVariant.
+   */
+  async function reportConversion(result: VariantResult): Promise<void> {
+    await fireEvent({
+      experiment_id: result.experiment.id,
+      variant_id: result.variantId,
+      session_id: result.sessionId,
+      event_type: 'conversion',
+    })
+  }
+
+  return { getVariant, reportConversion }
 }

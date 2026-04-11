@@ -75,6 +75,7 @@ create table experiments (
   workspace_id uuid references workspaces(id) on delete cascade,
   name text not null,
   status text not null default 'draft', -- draft | active | paused | completed
+  type text not null default 'edge',   -- edge | component
   base_url text not null,
   conversion_url text,
   created_at timestamptz default now(),
@@ -87,6 +88,7 @@ create table variants (
   id uuid primary key default gen_random_uuid(),
   experiment_id uuid references experiments(id) on delete cascade,
   name text not null,
+  description text,
   traffic_weight integer not null default 50,
   target_url text not null,
   is_control boolean default false,

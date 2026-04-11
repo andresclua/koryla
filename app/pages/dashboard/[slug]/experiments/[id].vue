@@ -13,7 +13,7 @@ const slug = route.params.slug as string
 const id = route.params.id as string
 
 interface Variant {
-  id: string; name: string; traffic_weight: number
+  id: string; name: string; description?: string; traffic_weight: number
   target_url: string; is_control: boolean; impressions: number
 }
 interface Experiment {
@@ -77,6 +77,49 @@ const leadingId = computed(() => {
 
 const variantColors = ['bg-gray-400', 'bg-[#C96A3F]', 'bg-[#0F2235]', 'bg-emerald-500']
 const variantColorDot = ['bg-gray-400', 'bg-[#C96A3F]', 'bg-[#0F2235]', 'bg-emerald-500']
+
+// ── Edit panel ────────────────────────────────────────────
+const showEdit = ref(false)
+const saving = ref(false)
+
+interface EditForm {
+  name: string
+  conversion_url: string
+  variantDescriptions: { id: string; name: string; description: string }[]
+}
+
+const editForm = ref<EditForm>({ name: '', conversion_url: '', variantDescriptions: [] })
+
+const openEdit = () => {
+  const exp = experiment.value!
+  editForm.value = {
+    name: exp.name,
+    conversion_url: exp.conversion_url ?? '',
+    variantDescriptions: exp.variants.map(v => ({ id: v.id, name: v.name, description: v.description ?? '' })),
+  }
+  showEdit.value = true
+}
+
+const saveEdit = async () => {
+  saving.value = true
+  try {
+    await $fetch(`/api/workspaces/${slug}/experiments/${id}`, {
+      method: 'PATCH',
+      body: {
+        name: editForm.value.name,
+        conversion_url: editForm.value.conversion_url || null,
+        variantDescriptions: editForm.value.variantDescriptions,
+      },
+    })
+    await refresh()
+    showEdit.value = false
+    toast.success('Experiment updated')
+  } catch (e: any) {
+    toast.error(e?.data?.message ?? 'Failed to save')
+  } finally {
+    saving.value = false
+  }
+}
 </script>
 
 <template>
@@ -98,11 +141,13 @@ const variantColorDot = ['bg-gray-400', 'bg-[#C96A3F]', 'bg-[#0F2235]', 'bg-emer
       <div class="flex items-center justify-between gap-4">
         <div class="flex items-center gap-3 min-w-0">
           <!-- Animated dot -->
-          <span v-if="statusConfig[experiment.status]?.pulse" class="relative flex h-2.5 w-2.5 shrink-0">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
-            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
-          </span>
-          <span v-else :class="['w-2.5 h-2.5 rounded-full shrink-0', statusConfig[experiment.status]?.dot]" />
+          <KTooltip :text="{ draft: 'Not started — set to Active to begin splitting traffic', active: 'Actively splitting traffic between variants', paused: 'Temporarily stopped — existing visitors keep their variant', completed: 'Experiment ended — results are locked' }[experiment.status] ?? experiment.status">
+            <span v-if="statusConfig[experiment.status]?.pulse" class="relative flex h-2.5 w-2.5 shrink-0 cursor-default">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+            </span>
+            <span v-else :class="['w-2.5 h-2.5 rounded-full shrink-0 cursor-default', statusConfig[experiment.status]?.dot]" />
+          </KTooltip>
 
           <div class="min-w-0">
             <div class="flex items-center gap-2.5 flex-wrap">
@@ -116,24 +161,33 @@ const variantColorDot = ['bg-gray-400', 'bg-[#C96A3F]', 'bg-[#0F2235]', 'bg-emer
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center gap-2 shrink-0">
+        <div v-if="!currentWorkspace?.is_demo" class="flex items-center gap-2 shrink-0">
           <button v-if="experiment.status === 'draft' || experiment.status === 'paused'"
             :disabled="updating"
             class="text-sm font-semibold text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg transition-colors disabled:opacity-40"
             @click="setStatus('active')">
             Start
           </button>
-          <button v-if="experiment.status === 'active'"
-            :disabled="updating"
-            class="text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-4 py-2 rounded-lg transition-colors disabled:opacity-40"
-            @click="setStatus('paused')">
-            Pause
-          </button>
-          <button v-if="experiment.status === 'active' || experiment.status === 'paused'"
-            :disabled="updating"
-            class="text-sm font-semibold text-[#0F2235] bg-[#FEF0E8] hover:bg-[#F0C9B0] border border-[#F0C9B0] px-4 py-2 rounded-lg transition-colors disabled:opacity-40"
-            @click="setStatus('completed')">
-            Complete
+          <KTooltip v-if="experiment.status === 'active'" text="Pauses the experiment — no new assignments, existing visitors keep their variant">
+            <button
+              :disabled="updating"
+              class="text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-4 py-2 rounded-lg transition-colors disabled:opacity-40"
+              @click="setStatus('paused')">
+              Pause
+            </button>
+          </KTooltip>
+          <KTooltip v-if="experiment.status === 'active' || experiment.status === 'paused'" text="Ends the experiment permanently and locks the results">
+            <button
+              :disabled="updating"
+              class="text-sm font-semibold text-[#0F2235] bg-[#FEF0E8] hover:bg-[#F0C9B0] border border-[#F0C9B0] px-4 py-2 rounded-lg transition-colors disabled:opacity-40"
+              @click="setStatus('completed')">
+              Complete
+            </button>
+          </KTooltip>
+          <button
+            class="text-sm font-medium text-gray-500 hover:text-gray-700 bg-white border border-gray-200 hover:border-gray-300 px-4 py-2 rounded-lg transition-colors"
+            @click="openEdit">
+            Edit
           </button>
           <button
             class="text-sm font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors"
@@ -149,21 +203,27 @@ const variantColorDot = ['bg-gray-400', 'bg-[#C96A3F]', 'bg-[#0F2235]', 'bg-emer
 
       <!-- Stats -->
       <div class="grid grid-cols-3 gap-4">
-        <div class="bg-white rounded-2xl border border-gray-200 px-6 py-5">
-          <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Total impressions</p>
-          <p class="text-3xl font-bold text-gray-900">{{ experiment.total_impressions.toLocaleString() }}</p>
+        <div :class="['bg-white rounded-2xl border px-6 py-5 transition-colors', experiment.status === 'active' ? 'border-green-200 border-l-4 border-l-green-500' : 'border-gray-200']">
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+            Total impressions
+            <KTooltip text="Times a visitor saw a variant — each visitor is counted once" />
+          </p>
+          <p class="text-3xl font-bold text-gray-900 tabular-nums">{{ experiment.total_impressions.toLocaleString() }}</p>
           <p class="text-xs text-gray-400 mt-1.5">across {{ experiment.variants.length }} variants</p>
         </div>
         <div class="bg-white rounded-2xl border border-gray-200 px-6 py-5">
           <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Conversions</p>
-          <p class="text-3xl font-bold text-gray-900">{{ experiment.total_conversions.toLocaleString() }}</p>
+          <p class="text-3xl font-bold text-gray-900 tabular-nums">{{ experiment.total_conversions.toLocaleString() }}</p>
           <p class="text-xs text-gray-400 mt-1.5 truncate font-mono">
-            {{ experiment.conversion_url ?? 'no conversion URL' }}
+            {{ experiment.conversion_url ?? 'no conversion URL set' }}
           </p>
         </div>
         <div class="bg-white rounded-2xl border border-gray-200 px-6 py-5">
-          <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Conv. rate</p>
-          <p class="text-3xl font-bold text-gray-900">
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+            Conv. rate
+            <KTooltip text="% of visitors who reached the conversion URL after seeing a variant" />
+          </p>
+          <p class="text-3xl font-bold text-gray-900 tabular-nums">
             {{ experiment.total_impressions ? ((experiment.total_conversions / experiment.total_impressions) * 100).toFixed(2) + '%' : '—' }}
           </p>
           <p class="text-xs text-gray-400 mt-1.5 capitalize">{{ experiment.status === 'active' ? 'experiment live' : experiment.status }}</p>
@@ -192,8 +252,8 @@ const variantColorDot = ['bg-gray-400', 'bg-[#C96A3F]', 'bg-[#0F2235]', 'bg-emer
 
         <!-- Variant rows -->
         <div class="divide-y divide-gray-100 mt-2">
-          <div v-for="(v, i) in experiment.variants" :key="v.id"
-            class="grid grid-cols-[auto_1fr_auto] items-center gap-6 px-6 py-4">
+          <div v-for="(v, i) in experiment.variants" :key="v.id" class="px-6 py-4">
+            <div class="grid grid-cols-[auto_1fr_auto] items-center gap-6">
 
             <!-- Name + URL -->
             <div class="flex items-center gap-3 w-52">
@@ -235,6 +295,16 @@ const variantColorDot = ['bg-gray-400', 'bg-[#C96A3F]', 'bg-[#0F2235]', 'bg-emer
               </div>
             </div>
 
+            </div>
+
+            <!-- Full-width description -->
+            <div v-if="v.description" class="mt-2.5 ml-[1.375rem] flex items-start gap-2">
+              <KTooltip text="Description of what's visually different in this variant" position="bottom">
+                <span class="text-[10px] font-bold uppercase tracking-wide text-[#C96A3F] bg-[#FEF0E8] px-1.5 py-0.5 rounded shrink-0 cursor-default">Visual changes</span>
+              </KTooltip>
+              <p class="text-xs text-gray-500 leading-relaxed">{{ v.description }}</p>
+            </div>
+
           </div>
         </div>
       </div>
@@ -270,4 +340,81 @@ const variantColorDot = ['bg-gray-400', 'bg-[#C96A3F]', 'bg-[#0F2235]', 'bg-emer
 
     </div>
   </div>
+
+  <!-- Edit panel -->
+  <Teleport to="body">
+    <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="showEdit" class="fixed inset-0 z-40 flex">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" @click="showEdit = false" />
+        <Transition enter-active-class="transition-transform duration-300 ease-out" enter-from-class="translate-x-full" enter-to-class="translate-x-0"
+          leave-active-class="transition-transform duration-200 ease-in" leave-from-class="translate-x-0" leave-to-class="translate-x-full">
+          <div v-if="showEdit" class="relative ml-auto w-full max-w-lg bg-white h-full flex flex-col shadow-2xl">
+
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <h2 class="text-base font-semibold text-gray-900">Edit experiment</h2>
+              <button class="text-gray-400 hover:text-gray-600 transition-colors" @click="showEdit = false">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Body -->
+            <div class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+
+              <div>
+                <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Experiment name</label>
+                <input v-model="editForm.name" type="text"
+                  class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F]" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                  Conversion URL
+                  <span class="normal-case font-normal ml-1 text-gray-400">(optional)</span>
+                </label>
+                <input v-model="editForm.conversion_url" type="url" placeholder="https://acme.com/thank-you"
+                  class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F] placeholder:text-gray-300" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Variant descriptions</label>
+                <div class="space-y-3">
+                  <div v-for="v in editForm.variantDescriptions" :key="v.id" class="border border-gray-200 rounded-xl p-4 space-y-2">
+                    <div class="flex items-center gap-2">
+                      <div :class="['w-2 h-2 rounded-full shrink-0', v.id === editForm.variantDescriptions[0]?.id ? 'bg-gray-400' : 'bg-[#C96A3F]']" />
+                      <span class="text-sm font-semibold text-gray-700">{{ v.name }}</span>
+                    </div>
+                    <input v-model="v.description" type="text"
+                      placeholder="What's different in this variant? (optional)"
+                      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#C96A3F] placeholder:text-gray-300" />
+                  </div>
+                </div>
+                <p v-if="experiment?.status === 'active'" class="text-xs text-amber-600 mt-3 flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                  Variant URLs and traffic weights can't be changed while the experiment is active.
+                </p>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-gray-100 flex items-center gap-3 shrink-0">
+              <button
+                :disabled="saving || !editForm.name"
+                class="flex-1 bg-[#C96A3F] text-white text-sm font-medium py-2.5 rounded-xl hover:bg-[#A8522D] disabled:opacity-40 transition-colors"
+                @click="saveEdit"
+              >{{ saving ? 'Saving…' : 'Save changes' }}</button>
+              <button class="text-sm text-gray-500 hover:text-gray-700 px-4 py-2.5 transition-colors" @click="showEdit = false">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+  </Teleport>
 </template>

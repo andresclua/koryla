@@ -37,6 +37,7 @@ export default defineEventHandler(async (event) => {
     .select('id, name, base_url, conversion_url, variants(id, name, traffic_weight, target_url, is_control)')
     .eq('workspace_id', apiKey.workspace_id)
     .eq('status', 'active')
+    .eq('type', 'edge')
 
   if (expError) throw createError({ statusCode: 500, message: expError.message })
 

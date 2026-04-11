@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 interface VariantInput {
   name: string
+  description?: string
   target_url: string
   traffic_weight: number
   is_control?: boolean
@@ -14,10 +15,11 @@ export default defineEventHandler(async (event) => {
 
   const slug = getRouterParam(event, 'slug')!
   const body = await readBody(event)
-  const { name, base_url, conversion_url, variants } = body as {
+  const { name, base_url, conversion_url, type, variants } = body as {
     name: string
     base_url: string
     conversion_url?: string
+    type?: 'edge' | 'component'
     variants: VariantInput[]
   }
 
@@ -41,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: experiment, error: expError } = await supabase
     .from('experiments')
-    .insert({ workspace_id: ws.id, name: name.trim(), base_url: base_url.trim(), conversion_url: conversion_url?.trim() || null })
+    .insert({ workspace_id: ws.id, name: name.trim(), base_url: base_url.trim(), conversion_url: conversion_url?.trim() || null, type: type ?? 'edge' })
     .select('id').single()
 
   if (expError) throw createError({ statusCode: 500, message: expError.message })
@@ -51,6 +53,7 @@ export default defineEventHandler(async (event) => {
     .insert(variants.map(v => ({
       experiment_id: experiment.id,
       name: v.name.trim(),
+      description: v.description?.trim() || null,
       target_url: v.target_url.trim(),
       traffic_weight: v.traffic_weight,
       is_control: v.is_control ?? false,

@@ -23,9 +23,9 @@ The [live demo](https://astro-demo.koryla.com) uses the edge function approach. 
 
 Drop a single file into your project and add it to `netlify.toml`. No changes to your `.astro` files.
 
-### netlify/edge-functions/koryla.ts
+> **Example:** [`netlify/edge-functions/koryla.ts`](https://github.com/andresclua/koryla/blob/main/astro-demo-internal/netlify/edge-functions/koryla.ts) — the self-contained edge function used in the Astro demo.
 
-Copy the self-contained edge function from the [Koryla Worker repo](https://github.com/andresclua/koryla) or use the `@koryla/netlify` package:
+### netlify/edge-functions/koryla.ts
 
 ```ts
 import { korylaMiddleware } from '@koryla/netlify'
@@ -34,23 +34,22 @@ export default korylaMiddleware({
   apiKey: Deno.env.get('KORYLA_API_KEY')!,
   apiUrl: Deno.env.get('KORYLA_API_URL')!,
 })
-
-export const config = { path: ['/', '/pricing'] }
 ```
 
 ### netlify.toml
 
+> **Example:** [`netlify.toml`](https://github.com/andresclua/koryla/blob/main/astro-demo-internal/netlify.toml) — edge function registration and path config used in the demo.
+
 ```toml
 [[edge_functions]]
   function = "koryla"
-  path = "/"
-
-[[edge_functions]]
-  function = "koryla"
-  path = "/pricing"
+  path = "/*"
+  excludedPath = "/assets/*"
 ```
 
-### Netlify environment variables
+Add one `[[edge_functions]]` block per path you want to intercept, or use `/*` with `excludedPath` to cover all pages at once.
+
+### Environment variables
 
 | Variable | Value |
 |---|---|
@@ -61,7 +60,11 @@ export const config = { path: ['/', '/pricing'] }
 
 ## Option B — @koryla/astro (component-level)
 
-Test a specific section within a page without routing to a different URL.
+Test a specific section within a page without routing to a different URL. Variant assignment happens in the Astro frontmatter — no edge function needed.
+
+> **Example:** [`src/pages/sdk-demo.astro`](https://github.com/andresclua/koryla/blob/main/astro-demo-internal/src/pages/sdk-demo.astro) — live demo page showing component-level A/B testing in the Astro frontmatter.
+>
+> **Helper:** [`src/lib/getVariant.ts`](https://github.com/andresclua/koryla/blob/main/astro-demo-internal/src/lib/getVariant.ts) — inline implementation of `@koryla/astro`'s `getVariant()` used in the demo (mirrors what the package does internally).
 
 ### Install
 
