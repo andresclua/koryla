@@ -136,7 +136,7 @@ zone_name = "yourdomain.com"
 
 ### Not sure if it's working?
 
-After deploying, visit any page on your domain and open **DevTools → Application → Cookies**. If there's an active experiment, you'll see a cookie named `sp_[experiment-id]`. If you don't see one yet, create your first experiment in Step 5 first, then come back and check.
+After deploying, visit any page on your domain and open **DevTools → Application → Cookies**. If there's an active experiment, you'll see a cookie named `ky_[experiment-id]`. If you don't see one yet, create your first experiment in Step 5 first, then come back and check.
 
 ## Step 4 — Point your domain through Cloudflare
 
@@ -162,7 +162,7 @@ If you can't or don't want to move your whole domain, set up a CNAME subdomain (
 
 ## Step 6 — Verify it's working
 
-Open your site in an incognito window and check the browser cookies. You should see a cookie named `sp_{experimentId}` with a variant ID value. That's Koryla assigning you to a group.
+Open your site in an incognito window and check the browser cookies. You should see a cookie named `ky_{experimentId}` with a variant ID value. That's Koryla assigning you to a group.
 
 Refresh a few times — the cookie persists so you always see the same variant. Open a second incognito window and you may land in a different variant.
 
