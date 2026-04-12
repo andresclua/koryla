@@ -26,14 +26,29 @@ const signOut = async () => {
 const showNewWs = ref(false)
 const newWsName = ref('')
 const newWsLoading = ref(false)
+const newWsError = ref('')
+
+const WORKSPACE_LIMITS: Record<string, number> = { free: 1, starter: 1, growth: 3 }
+
+const ownedWorkspaces = computed(() =>
+  workspaces.value.filter(w => !w.is_demo && w.role === 'owner')
+)
+const highestPlan = computed(() => {
+  const order = ['free', 'starter', 'growth']
+  return ownedWorkspaces.value.reduce((best, w) =>
+    order.indexOf(w.plan) > order.indexOf(best) ? w.plan : best, 'free')
+})
+const wsLimit = computed(() => WORKSPACE_LIMITS[highestPlan.value] ?? 1)
+const atLimit = computed(() => ownedWorkspaces.value.length >= wsLimit.value)
 
 const createWorkspace = async () => {
   if (!newWsName.value.trim()) return
   newWsLoading.value = true
+  newWsError.value = ''
   try {
     const user = useSupabaseUser()
     const { data: { session } } = await supabase.auth.getSession()
-    const { slug } = await $fetch('/api/workspaces', {
+    const { slug } = await $fetch<{ slug: string }>('/api/workspaces', {
       method: 'POST',
       body: { userId: user.value!.id, workspaceName: newWsName.value.trim(), email: session?.user?.email ?? '' },
     })
@@ -41,6 +56,8 @@ const createWorkspace = async () => {
     showNewWs.value = false
     newWsName.value = ''
     router.push(`/dashboard/${slug}`)
+  } catch (e: any) {
+    newWsError.value = e?.data?.message ?? 'Failed to create workspace'
   } finally {
     newWsLoading.value = false
   }
@@ -142,8 +159,11 @@ const navLinks = computed(() => [
       <!-- New workspace + sign out -->
       <div class="px-3 py-3 border-t border-gray-100 shrink-0 space-y-1">
         <button
-          class="w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors"
-          @click="showNewWs = true"
+          :disabled="atLimit"
+          :title="atLimit ? `${highestPlan} plan allows ${wsLimit} workspace${wsLimit === 1 ? '' : 's'} — upgrade to Growth for more` : ''"
+          class="w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          :class="atLimit ? 'text-gray-300' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'"
+          @click="!atLimit && (showNewWs = true)"
         >
           <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -175,10 +195,11 @@ const navLinks = computed(() => [
               @keydown.enter="createWorkspace"
               @keydown.esc="showNewWs = false"
             />
+            <p v-if="newWsError" class="text-xs text-red-600 mb-3">{{ newWsError }}</p>
             <div class="flex gap-2">
               <button
                 class="flex-1 px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
-                @click="showNewWs = false"
+                @click="showNewWs = false; newWsError = ''"
               >Cancel</button>
               <button
                 :disabled="!newWsName.trim() || newWsLoading"

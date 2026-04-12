@@ -144,6 +144,26 @@ const isOwner = computed(() => currentWorkspace.value?.role === 'owner')
 
 const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
+// ── Delete workspace ──────────────────────────────────────
+const deleteConfirmName = ref('')
+const deleteLoading = ref(false)
+const canConfirmDelete = computed(() =>
+  deleteConfirmName.value === currentWorkspace.value?.name && isOwner.value
+)
+
+const deleteWorkspace = async () => {
+  if (!canConfirmDelete.value) return
+  deleteLoading.value = true
+  try {
+    await $fetch(`/api/workspaces/${slug}`, { method: 'DELETE' })
+    await navigateTo('/dashboard', { replace: true })
+  } catch (e: any) {
+    toast.error(e?.data?.message ?? 'Failed to delete workspace')
+  } finally {
+    deleteLoading.value = false
+  }
+}
+
 // ── Demo workspace ────────────────────────────────────────
 const showDemo = ref(true)
 onMounted(() => {
@@ -316,6 +336,41 @@ const toggleDemo = (val: boolean) => {
             <button class="text-xs text-[#C96A3F] font-medium shrink-0" @click="copyInvite">Copy</button>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Danger zone -->
+    <section v-if="isOwner" class="bg-white border border-red-100 rounded-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-red-100">
+        <h2 class="text-sm font-semibold text-red-600">Danger zone</h2>
+      </div>
+      <div class="px-6 py-5 space-y-4">
+        <div>
+          <p class="text-sm font-medium text-gray-700">Delete workspace</p>
+          <p class="text-xs text-gray-400 mt-0.5">Permanently deletes this workspace, all experiments, variants, events and API keys. This cannot be undone.</p>
+        </div>
+
+        <div v-if="currentWorkspace?.stripe_subscription_id" class="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <svg class="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          <p class="text-xs text-amber-700">You have an active subscription on this workspace. Deleting it will cancel your plan immediately — you might want to <a :href="`/dashboard/${slug}/billing`" class="underline font-medium">downgrade first</a> instead.</p>
+        </div>
+
+        <div>
+          <label class="block text-xs text-gray-500 mb-1.5">Type <span class="font-mono font-semibold text-gray-700">{{ currentWorkspace?.name }}</span> to confirm</label>
+          <input
+            v-model="deleteConfirmName"
+            type="text"
+            :placeholder="currentWorkspace?.name"
+            class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+          />
+        </div>
+        <button
+          :disabled="!canConfirmDelete || deleteLoading"
+          class="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          @click="deleteWorkspace"
+        >{{ deleteLoading ? 'Deleting…' : 'Delete workspace' }}</button>
       </div>
     </section>
 

@@ -9,6 +9,8 @@ interface Body {
   joinWorkspaceId?: string | null
 }
 
+const WORKSPACE_LIMITS: Record<string, number> = { free: 1, starter: 1, growth: 3 }
+
 export default defineEventHandler(async (event) => {
   const { userId, workspaceName, email, joinWorkspaceId } = await readBody<Body>(event)
 
@@ -20,6 +22,32 @@ export default defineEventHandler(async (event) => {
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_KEY!
   )
+
+  // Enforce workspace limit based on highest plan across owned workspaces
+  if (!joinWorkspaceId) {
+    const { data: ownedMembers } = await supabase
+      .from('workspace_members')
+      .select('workspace:workspaces(plan, is_demo)')
+      .eq('user_id', userId)
+      .eq('role', 'owner')
+
+    const ownedWorkspaces = (ownedMembers ?? [])
+      .map((m: any) => m.workspace)
+      .filter((w: any) => w && !w.is_demo)
+
+    const highestPlan = ownedWorkspaces.reduce((best: string, w: any) => {
+      const order = ['free', 'starter', 'growth']
+      return order.indexOf(w.plan) > order.indexOf(best) ? w.plan : best
+    }, 'free')
+
+    const limit = WORKSPACE_LIMITS[highestPlan] ?? 1
+    if (ownedWorkspaces.length >= limit) {
+      throw createError({
+        statusCode: 403,
+        message: `Your ${highestPlan} plan allows up to ${limit} workspace${limit === 1 ? '' : 's'}. Upgrade to Growth to create more.`,
+      })
+    }
+  }
 
   // Join existing workspace via domain match
   if (joinWorkspaceId) {
