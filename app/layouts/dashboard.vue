@@ -22,6 +22,30 @@ const signOut = async () => {
   router.push('/login')
 }
 
+// New workspace modal
+const showNewWs = ref(false)
+const newWsName = ref('')
+const newWsLoading = ref(false)
+
+const createWorkspace = async () => {
+  if (!newWsName.value.trim()) return
+  newWsLoading.value = true
+  try {
+    const user = useSupabaseUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const { slug } = await $fetch('/api/workspaces', {
+      method: 'POST',
+      body: { userId: user.value!.id, workspaceName: newWsName.value.trim(), email: session?.user?.email ?? '' },
+    })
+    await fetchWorkspaces()
+    showNewWs.value = false
+    newWsName.value = ''
+    router.push(`/dashboard/${slug}`)
+  } finally {
+    newWsLoading.value = false
+  }
+}
+
 const switchWorkspace = (e: Event) => {
   const slug = (e.target as HTMLSelectElement).value
   router.push(`/dashboard/${slug}`)
@@ -115,8 +139,17 @@ const navLinks = computed(() => [
         </NuxtLink>
       </nav>
 
-      <!-- Sign out -->
-      <div class="px-3 py-3 border-t border-gray-100 shrink-0">
+      <!-- New workspace + sign out -->
+      <div class="px-3 py-3 border-t border-gray-100 shrink-0 space-y-1">
+        <button
+          class="w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors"
+          @click="showNewWs = true"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          New workspace
+        </button>
         <button
           class="w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors"
           @click="signOut"
@@ -127,6 +160,36 @@ const navLinks = computed(() => [
           Sign out
         </button>
       </div>
+
+      <!-- New workspace modal -->
+      <Teleport to="body">
+        <div v-if="showNewWs" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="showNewWs = false">
+          <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+            <h2 class="text-base font-semibold text-gray-900 mb-1">New workspace</h2>
+            <p class="text-sm text-gray-400 mb-4">Each workspace has its own experiments, API keys and billing.</p>
+            <input
+              v-model="newWsName"
+              type="text"
+              placeholder="My project"
+              class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C96A3F] mb-4"
+              @keydown.enter="createWorkspace"
+              @keydown.esc="showNewWs = false"
+            />
+            <div class="flex gap-2">
+              <button
+                class="flex-1 px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+                @click="showNewWs = false"
+              >Cancel</button>
+              <button
+                :disabled="!newWsName.trim() || newWsLoading"
+                class="flex-1 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-40"
+                style="background: #C96A3F"
+                @click="createWorkspace"
+              >{{ newWsLoading ? 'Creating…' : 'Create' }}</button>
+            </div>
+          </div>
+        </div>
+      </Teleport>
     </aside>
 
     <!-- Main -->

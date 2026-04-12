@@ -26,9 +26,10 @@ export default defineEventHandler(async (event) => {
 
   const userWorkspaces = (membersResult.data ?? []).map((d: any) => ({ ...d.workspace, role: d.role }))
 
-  // Prepend demo workspace if it exists and user isn't already a member
+  // Prepend demo workspace only if the user has no workspace of their own yet
+  const hasOwnWorkspace = userWorkspaces.some((w: any) => !w.is_demo)
   const demoWs = demoResult.data
-  if (demoWs && !userWorkspaces.find((w: any) => w.id === demoWs.id)) {
+  if (!hasOwnWorkspace && demoWs && !userWorkspaces.find((w: any) => w.id === demoWs.id)) {
     return [{ ...demoWs, role: 'viewer' }, ...userWorkspaces]
   }
 
